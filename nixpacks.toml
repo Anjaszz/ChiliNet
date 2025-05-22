@@ -1,2 +1,13 @@
+# file: nixpacks.toml
 [phases.setup]
-nixPkgs = ["python312", "python312Packages.setuptools", "python312Packages.pip", "python312Packages.distutils"]
+nixPkgs = ['python311', 'python311Packages.pip', 'python311Packages.setuptools']
+
+[phases.build]
+cmds = [
+  "python3.11 -m venv /opt/venv",
+  "/opt/venv/bin/pip install --upgrade pip",
+  "/opt/venv/bin/pip install -r requirements.txt"
+]
+
+[phases.start]
+cmd = "/opt/venv/bin/python app.py"

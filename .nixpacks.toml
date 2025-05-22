@@ -1,0 +1,10 @@
+[phases.setup]
+nixPkgs = [
+  "python312",
+  "python312Packages.setuptools",
+  "python312Packages.pip",
+  "python312Packages.distutils"
+]
+
+[start]
+cmd = "python app.py"

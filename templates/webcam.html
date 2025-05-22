@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChiliNet - Live Webcam Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#39ff14',
+                        'neon-pink': '#ff10f0',
+                        'neon-blue': '#00ffff',
+                        'neon-yellow': '#ffff00',
+                    },
+                    fontFamily: {
+                        'mono': ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .neobrutalism-shadow {
+            box-shadow: 6px 6px 0px #000;
+        }
+        .neobrutalism-shadow-sm {
+            box-shadow: 4px 4px 0px #000;
+        }
+        .neobrutalism-text-shadow {
+            text-shadow: 3px 3px 0px #000;
+        }
+        .webcam-frame {
+            border: 6px solid #000;
+            box-shadow: 8px 8px 0px #000;
+        }
+        .treatment-item {
+            background: linear-gradient(135deg, #39ff14, #00ffff);
+            margin-bottom: 8px;
+            padding: 12px;
+            border: 3px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            transition: transform 0.2s;
+        }
+        .treatment-item:hover {
+            transform: translateX(5px);
+        }
+    </style>
+    <script>
+        // Fungsi untuk mulai mengambil video dari webcam
+        function startWebcam() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        var videoElement = document.getElementById('webcam');
+                        videoElement.srcObject = stream;
+                        videoElement.play();
+                        // Show success message
+                        document.getElementById('status').innerHTML = '✅ Webcam Active - Ready to Capture!';
+                        document.getElementById('status').className = 'text-neon-green font-bold text-xl text-center mb-4';
+                    })
+                    .catch(function(err) {
+                        console.log("Terjadi kesalahan: " + err);
+                        document.getElementById('status').innerHTML = '❌ Webcam Access Denied';
+                        document.getElementById('status').className = 'text-red-500 font-bold text-xl text-center mb-4';
+                    });
+            } else {
+                alert("Browser Anda tidak mendukung akses webcam.");
+                document.getElementById('status').innerHTML = '❌ Browser Not Supported';
+                document.getElementById('status').className = 'text-red-500 font-bold text-xl text-center mb-4';
+            }
+        }
+
+        // Fungsi untuk mengambil snapshot dari webcam
+        function captureImage() {
+            var canvas = document.createElement('canvas');
+            var video = document.getElementById('webcam');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            var imageData = canvas.toDataURL('image/jpeg');
+
+            // Show processing message
+            document.getElementById('processing').style.display = 'block';
+            document.getElementById('capture-btn').disabled = true;
+            document.getElementById('capture-btn').innerHTML = '⏳ Processing...';
+
+            // Clear previous results
+            document.getElementById('result-section').style.display = 'none';
+            document.getElementById('disease-info-section').style.display = 'none';
+
+            // Kirim gambar ke backend (Flask)
+            var formData = new FormData();
+            formData.append('image', imageData);
+
+            // Kirim ke backend dan ambil gambar baru
+            fetch('/capture_webcam', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide processing message
+                document.getElementById('processing').style.display = 'none';
+                document.getElementById('capture-btn').disabled = false;
+                document.getElementById('capture-btn').innerHTML = '📸 CAPTURE & ANALYZE';
+
+                // Tampilkan hasil prediksi jika ada
+                if (data.result_image) {
+                    document.getElementById('result').src = data.result_image;
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('result-section').style.display = 'block';
+                    
+                    // Show analysis results
+                    if (data.has_detections && data.detected_diseases) {
+                        displayDiseaseInfo(data.detected_diseases);
+                        document.getElementById('result-status').innerHTML = '🎯 Analysis Complete - Disease Detected!';
+                        document.getElementById('result-status').className = 'text-red-500 font-bold text-xl text-center mb-4';
+                    } else {
+                        displayHealthyPlant();
+                        document.getElementById('result-status').innerHTML = '✅ Analysis Complete - Plant Healthy!';
+                        document.getElementById('result-status').className = 'text-neon-green font-bold text-xl text-center mb-4';
+                    }
+                } else {
+                    document.getElementById('result-status').innerHTML = '❌ Analysis Failed';
+                    document.getElementById('result-status').className = 'text-red-500 font-bold text-xl text-center mb-4';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('processing').style.display = 'none';
+                document.getElementById('capture-btn').disabled = false;
+                document.getElementById('capture-btn').innerHTML = '📸 CAPTURE & ANALYZE';
+                document.getElementById('result-status').innerHTML = '❌ Connection Error';
+                document.getElementById('result-status').className = 'text-red-500 font-bold text-xl text-center mb-4';
+            });
+        }
+
+        function displayDiseaseInfo(diseases) {
+            const diseaseSection = document.getElementById('disease-info-section');
+            const diseaseContainer = document.getElementById('disease-info-container');
+            
+            // Clear previous content
+            diseaseContainer.innerHTML = '';
+            
+            diseases.forEach(disease => {
+                const diseaseDiv = document.createElement('div');
+                diseaseDiv.className = 'bg-black border-4 border-black neobrutalism-shadow-sm p-6 mb-4';
+                
+                diseaseDiv.innerHTML = `
+                    <div class="text-center mb-4">
+                        <h4 class="text-3xl font-bold text-neon-green mb-2">
+                            ${disease.icon} ${disease.name} Terdeteksi
+                        </h4>
+                        ${disease.confidence ? `<p class="text-neon-blue font-bold text-lg">Kepercayaan: ${(disease.confidence * 100).toFixed(1)}%</p>` : ''}
+                        <p class="text-white font-bold mt-2">${disease.description}</p>
+                    </div>
+
+                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                        <h5 class="text-xl font-bold text-black mb-3">💊 Saran Penanganan Segera:</h5>
+                        <div class="space-y-2">
+                            ${disease.treatments.map(treatment => 
+                                `<div class="treatment-item">
+                                    <p class="text-black font-bold flex items-start">
+                                        <span class="text-green-800 mr-2 font-bold">✓</span>
+                                        ${treatment}
+                                    </p>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4">
+                        <h5 class="text-xl font-bold text-black mb-3">🛡️ Tips Pencegahan:</h5>
+                        <div class="space-y-1">
+                            ${disease.prevention.map(prevention => 
+                                `<p class="text-black font-bold flex items-start text-sm">
+                                    <span class="text-purple-800 mr-2 font-bold">🔰</span>
+                                    ${prevention}
+                                </p>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                diseaseContainer.appendChild(diseaseDiv);
+            });
+            
+            diseaseSection.style.display = 'block';
+        }
+
+        function displayHealthyPlant() {
+            const diseaseSection = document.getElementById('disease-info-section');
+            const diseaseContainer = document.getElementById('disease-info-container');
+            
+            diseaseContainer.innerHTML = `
+                <div class="bg-green-500 border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <h4 class="text-3xl font-bold text-black mb-2">✅ Tanaman Sehat!</h4>
+                    <p class="text-black font-bold text-lg mb-4">Tidak ada penyakit yang terdeteksi. Tanaman cabai Anda dalam kondisi baik!</p>
+                    
+                    <div class="bg-white border-2 border-black p-4">
+                        <h5 class="text-xl font-bold text-black mb-2">💡 Tips Perawatan Rutin:</h5>
+                        <ul class="text-black font-bold text-sm space-y-1 text-left">
+                            <li>• Siram secara teratur sesuai kebutuhan</li>
+                            <li>• Berikan pupuk seimbang setiap 2 minggu</li>
+                            <li>• Periksa tanaman setiap 2-3 hari</li>
+                            <li>• Jaga kebersihan area sekitar tanaman</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            diseaseSection.style.display = 'block';
+        }
+    </script>
+</head>
+<body onload="startWebcam()" class="bg-neon-yellow font-mono min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-blue-500 border-4 border-black neobrutalism-shadow mb-8">
+        <div class=" mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-neon-green text-3xl font-bold flex gap-2 items-center">
+                    <img src="{{ url_for('static', filename='assets/chilinet.png') }}" alt="Logo" class="h-14 w-14">
+                  <a href="/">ChiliNet</a>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="/" class="text-white hover:text-neon-blue transition-colors">← Kembali ke Beranda</a>
+                    <a href="/upload" class="text-white hover:text-neon-blue transition-colors">Mode Upload</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl md:text-6xl font-bold text-black neobrutalism-text-shadow mb-4">
+                Deteksi Langsung
+            </h1>
+            <p class="text-xl text-black font-bold">Deteksi penyakit cabai secara real-time menggunakan webcam Anda</p>
+        </div>
+
+        <!-- Status -->
+        <div id="status" class="text-neon-blue font-bold text-xl text-center mb-4">
+            🔄 Menginisialisasi Webcam...
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Webcam Section -->
+            <div class="bg-white border-4 border-black neobrutalism-shadow p-6">
+                <h3 class="text-2xl font-bold text-black mb-4 text-center">📹 Feed Kamera Langsung</h3>
+                
+                <div class="flex justify-center mb-6">
+                    <video id="webcam" width="640" height="480" autoplay muted 
+                           class="webcam-frame bg-black max-w-full h-auto">
+                    </video>
+                </div>
+
+                <div class="text-center space-y-4">
+                    <button id="capture-btn" onclick="captureImage()" 
+                            class="bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-xl font-bold text-black hover:bg-neon-pink transition-colors transform hover:scale-105">
+                        📸 AMBIL & ANALISIS
+                    </button>
+
+                    <!-- Processing indicator -->
+                    <div id="processing" style="display: none;" class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-4">
+                        <p class="text-black font-bold text-center">🔄 Menganalisis gambar dengan AI...</p>
+                        <div class="flex justify-center mt-2">
+                            <div class="animate-spin rounded-full h-8 w-8 border-4 border-black border-t-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-black border-4 border-black neobrutalism-shadow p-6">
+                <h3 class="text-2xl font-bold text-neon-green mb-4 text-center">🎯 Hasil Analisis</h3>
+                
+                <div id="result-status" class="text-white font-bold text-center mb-4">
+                    Menunggu pengambilan gambar...
+                </div>
+
+                <div id="result-section" style="display: none;" class="text-center">
+                    <div class="border-4 border-neon-green neobrutalism-shadow-sm mb-4 inline-block">
+                        <img id="result" src="" alt="Hasil Analisis" 
+                             class="max-w-full h-auto bg-white" style="display:none;">
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="bg-neon-yellow border-4 border-white neobrutalism-shadow-sm p-4 mt-6">
+                    <h4 class="font-bold text-black mb-2 text-center">📋 Cara Penggunaan</h4>
+                    <ul class="text-black font-bold text-sm space-y-1">
+                        <li>• Posisikan daun cabai di depan kamera</li>
+                        <li>• Pastikan pencahayaan yang cukup</li>
+                        <li>• Klik "Ambil & Analisis"</li>
+                        <li>• Tunggu hasil analisis AI</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disease Information Section (Dynamic) -->
+        <div id="disease-info-section" style="display: none;" class="mt-8">
+            <div id="disease-info-container">
+                <!-- Disease information will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Disease Database (Static - Always Visible) -->
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mt-8">
+            <h3 class="text-3xl font-bold text-black mb-6 text-center">🦠 Penyakit yang Dapat Dideteksi</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🔴 Leaf Spot</h4>
+                    <p class="text-black font-bold text-sm">Penyakit jamur dengan bercak coklat/hitam yang mengurangi fotosintesis dan hasil panen.</p>
+                </div>
+                <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🌀 Leaf Curl</h4>
+                    <p class="text-black font-bold text-sm">Penyakit virus yang menyebabkan daun keriting, sering ditularkan oleh kutu daun.</p>
+                </div>
+                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🪰 Whitefly</h4>
+                    <p class="text-black font-bold text-sm">Hama yang menyebabkan daun menguning dengan menghisap cairan tanaman dan menularkan virus.</p>
+                </div>
+                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">💛 Yellowish</h4>
+                    <p class="text-black font-bold text-sm">Menguning secara umum yang menunjukkan kekurangan nutrisi atau stres tanaman.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="bg-black border-4 border-black neobrutalism-shadow p-6 mt-8">
+            <h3 class="text-2xl font-bold text-neon-green mb-4 text-center">💡 Tips Profesional</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-white border-2 border-neon-green p-4">
+                    <h4 class="font-bold text-black mb-2">🔆 Pencahayaan</h4>
+                    <p class="text-black font-bold text-sm">Gunakan cahaya alami atau lampu putih terang untuk hasil terbaik</p>
+                </div>
+                <div class="bg-white border-2 border-neon-pink p-4">
+                    <h4 class="font-bold text-black mb-2">📏 Jarak</h4>  
+                    <p class="text-black font-bold text-sm">Jaga jarak daun 20-30cm dari kamera untuk fokus optimal</p>
+                </div>
+                <div class="bg-white border-2 border-neon-blue p-4">
+                    <h4 class="font-bold text-black mb-2">🎯 Sudut</h4>
+                    <p class="text-black font-bold text-sm">Tunjukkan area yang terkena dengan jelas tanpa bayangan</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4 mt-8">
+            <a href="/" class="bg-black border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors">
+                ← Kembali ke Beranda
+            </a>
+            <a href="/upload" class="bg-neon-blue border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-black hover:bg-neon-pink transition-colors">
+                📁 Mode Upload
+            </a>
+        </div>
+    </div>
+</body>
+</html>

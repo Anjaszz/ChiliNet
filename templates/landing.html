@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChiliNet - AI Chili Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#39ff14',
+                        'neon-pink': '#ff10f0',
+                        'neon-blue': '#00ffff',
+                        'neon-yellow': '#F28B82',
+                    },
+                    fontFamily: {
+                        'mono': ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .neobrutalism-shadow {
+            box-shadow: 6px 6px 0px #000;
+        }
+        .neobrutalism-shadow-sm {
+            box-shadow: 4px 4px 0px #000;
+        }
+        .neobrutalism-text-shadow {
+            text-shadow: 3px 3px 0px #000;
+        }
+    </style>
+</head>
+<body class="bg-neon-yellow font-mono">
+    <!-- Navigation -->
+    <nav class="bg-blue-500 neobrutalism-shadow border-4 border-black  mb-8">
+        <div class=" mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-neon-green text-3xl font-bold flex gap-2 items-center">
+                    <img src="{{ url_for('static', filename='assets/chilinet.png') }}" alt="Logo" class="h-14 w-14">
+                  <p>ChiliNet</p>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-white hover:text-neon-blue transition-colors">About</a>
+                    <a href="#diseases" class="text-white hover:text-neon-blue transition-colors">Diseases</a>
+                    <a href="#team" class="text-white hover:text-neon-blue transition-colors">Team</a>
+                    <a href="#contact" class="text-white hover:text-neon-blue transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto px-4 py-16">
+        <div class="text-center">
+            <h1 class="text-6xl md:text-8xl font-bold text-black neobrutalism-text-shadow mb-6">
+                ChiliNet
+            </h1>
+            <p class="text-2xl md:text-3xl text-black font-bold mb-8">
+                Deteksi Penyakit pada Tanaman Cabai Menggunakan Kecerdasan Buatan
+            </p>
+            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 max-w-3xl mx-auto mb-12">
+                <p class="text-xl text-black font-bold">
+                    Deteksi penyakit pada tanaman cabai Anda secara instan menggunakan teknologi visi komputer canggih. Unggah gambar, video, atau gunakan deteksi real-time melalui kamera.
+                </p>
+            </div>
+            <a href="/upload" class="inline-block bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-black hover:bg-neon-blue transition-colors transform hover:scale-105">
+                DETEKSI DISINI →
+            </a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="max-w-7xl mx-auto px-4 py-16">
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
+            <h2 class="text-4xl font-bold text-black mb-8 text-center">Tentang ChiliNet</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">🌶️ Apa yang Kami Lakukan</h3>
+                    <p class="text-black font-bold">
+                        ChiliNet menggunakan teknologi AI mutakhir untuk mengidentifikasi penyakit pada tanaman cabai. Sistem kami mampu mendeteksi berbagai jenis penyakit dan hama yang umum menyerang tanaman cabai.
+                    </p>
+                </div>
+                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">🚀 Cara Kerjanya</h3>
+                    <p class="text-black font-bold">
+                        Cukup unggah gambar atau video tanaman cabai Anda, atau gunakan fitur kamera real-time kami. 
+                        Model AI kami akan menganalisis tanaman dan memberikan diagnosis instan beserta skor kepercayaannya.
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Diseases Section -->
+    <section id="diseases" class="max-w-7xl mx-auto px-4 py-16">
+        <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
+            <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Penyakit yang Dapat Dideteksi</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-neon-blue border-4 border-white neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">🔴 Leaf Spot</h3>
+                    <p class="text-black font-bold">
+                        Penyakit jamur yang menyebabkan bercak coklat atau hitam pada daun. 
+                    Mengurangi fotosintesis dan dapat menurunkan hasil panen secara signifikan jika tidak ditangani.
+                    </p>
+                </div>
+                <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">🌀 Leaf Curl</h3>
+                    <p class="text-black font-bold">
+                        Penyakit virus yang menyebabkan daun menggulung dan mengecil. 
+                    Sering ditularkan oleh kutu daun dan dapat menyebar dengan cepat di lahan pertanian.
+                    </p>
+                </div>
+                <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">🪰 Whitefly</h3>
+                    <p class="text-black font-bold">
+                        Serangan hama yang menyebabkan daun menguning dan menggulung. 
+                        Serangga ini menghisap cairan tanaman dan dapat menularkan penyakit virus.
+                    </p>
+                </div>
+                <div class="bg-[#FEE9AE] border-4 border-white neobrutalism-shadow-sm p-6">
+                    <h3 class="text-2xl font-bold text-black mb-4">💛 Yellowish</h3>
+                    <p class="text-black font-bold">
+                        Menguning secara umum pada daun yang menandakan kekurangan nutrisi, 
+                        stres tanaman, atau tahap awal dari berbagai jenis penyakit.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="max-w-7xl mx-auto px-4 py-16">
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
+            <h2 class="text-4xl font-bold text-black mb-8 text-center">Meet Our Team</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='assets/naruto.jpg') }}" alt="Team Member 1" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-xl font-bold text-black mb-2">Nabil Irwansayh</h3>
+                    <p class="text-black font-bold">AI Developer</p>
+                </div>
+                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='assets/Sakura.webp') }}" alt="Team Member 2" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-xl font-bold text-black mb-2">Annisa Nur Amelia</h3>
+                    <p class="text-black font-bold">Data Scientist</p>
+                </div>
+                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='assets/itachi.avif') }}" alt="Team Member 3" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-xl font-bold text-black mb-2">Anjas Rani</h3>
+                    <p class="text-black font-bold">Frontend Developer</p>
+                </div>
+                <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='assets/Kakashi.jpg') }}" alt="Team Member 4" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-xl font-bold text-black mb-2">Ridwan Saputra</h3>
+                    <p class="text-black font-bold">Agricultural Expert</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="max-w-7xl mx-auto px-4 py-16">
+        <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
+            <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Fitur Unggulan</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white border-4 border-neon-green neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">📸</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Unggah Gambar</h3>
+                    <p class="text-black font-bold">Unggah foto tanaman cabai Anda untuk analisis instan</p>
+                </div>
+                <div class="bg-white border-4 border-neon-pink neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">🎥</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Pemrosesan Video</h3>
+                    <p class="text-black font-bold">Analisis klip video secara menyeluruh, bingkai demi bingkai</p>
+                </div>
+                <div class="bg-white border-4 border-neon-blue neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">📹</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Kamera Real-time</h3>
+                    <p class="text-black font-bold">Deteksi langsung menggunakan kamera perangkat Anda</p>
+                </div>
+            </div>
+        </div>        
+    </section>
+
+    <!-- CTA Section -->
+    <section class="max-w-7xl mx-auto px-4 py-16">
+        <div class="bg-neon-green border-4 border-black neobrutalism-shadow p-8 text-center">
+            <h2 class="text-4xl font-bold text-black mb-4">Siap Melindungi Tanaman Anda?</h2>
+            <p class="text-xl text-black font-bold mb-8">
+                Mulailah mendeteksi penyakit pada tanaman cabai Anda hari ini dengan sistem bertenaga AI kami
+            </p>
+            <a href="/upload" class="inline-block bg-black border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors transform hover:scale-105">
+                MULAI SEKARANG →
+            </a>
+        </div>
+    </section>
+    
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-blue-500 border-t-4 border-black mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold text-neon-green mb-4">ChiliNet</h3>
+                <p class="text-white font-bold mb-4">AI-Powered Agricultural Solutions</p>
+                <div class="flex justify-center space-x-6">
+                    <a href="https://www.instagram.com/anjaszz_" class="text-black hover:text-neon-blue transition-colors">Instagram</a>
+                    <a href="https://github.com/Anjaszz" class="text-black hover:text-neon-blue transition-colors">GitHub</a>
+                    <a href="/" class="text-black hover:text-neon-blue transition-colors">Research Paper</a>
+                    <a href="https://www.facebook.com/AnjasRanii" class="text-black hover:text-neon-blue transition-colors">Contact</a>
+                </div>
+                <p class="text-white mt-4">© 2025 ChiliNet Team. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

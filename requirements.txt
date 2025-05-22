@@ -1,0 +1,27 @@
+# Core Web Framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# Computer Vision and Image Processing
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+numpy==1.24.3
+Pillow==10.0.1
+
+# Machine Learning and AI
+roboflow==1.1.9
+ultralytics==8.0.196
+
+# HTTP Requests and API
+requests==2.31.0
+urllib3==2.0.7
+
+# Base64 and Image Encoding
+base64==1.0.2
+
+# File Handling and Utilities
+os-sys==2.1.4
+pathlib==1.0.1
+
+# Development and Debugging
+python-dotenv==1.0.0

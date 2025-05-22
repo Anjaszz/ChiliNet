@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChiliNet - Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#39ff14',
+                        'neon-pink': '#ff10f0',
+                        'neon-blue': '#00ffff',
+                        'neon-yellow': '#ffff00',
+                    },
+                    fontFamily: {
+                        'mono': ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .neobrutalism-shadow {
+            box-shadow: 6px 6px 0px #000;
+        }
+        .neobrutalism-shadow-sm {
+            box-shadow: 4px 4px 0px #000;
+        }
+        .neobrutalism-text-shadow {
+            text-shadow: 3px 3px 0px #000;
+        }
+        .file-input::-webkit-file-upload-button {
+            background: #39ff14;
+            border: 3px solid #000;
+            color: #000;
+            font-weight: bold;
+            padding: 8px 16px;
+            margin-right: 16px;
+            box-shadow: 3px 3px 0px #000;
+        }
+        .file-input::-webkit-file-upload-button:hover {
+            background: #ff10f0;
+        }
+    </style>
+</head>
+<body class="bg-neon-yellow font-mono min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-blue-500 border-4 border-black neobrutalism-shadow mb-8">
+        <div class=" mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-neon-green text-3xl font-bold flex gap-2 items-center">
+                    <img src="{{ url_for('static', filename='assets/chilinet.png') }}" alt="Logo" class="h-14 w-14">
+                  <a href="/">ChiliNet</a>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="/" class="text-white hover:text-neon-blue transition-colors">← Kembali ke Beranda</a>
+                    <a href="/stream_webcam" class="text-white hover:text-neon-blue transition-colors">Mode Webcam</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl md:text-6xl font-bold text-neon-pink neobrutalism-text-shadow mb-4">
+                Deteksi Penyakit
+            </h1>
+            <p class="text-xl text-black font-bold">Unggah gambar atau video tanaman cabai Anda untuk analisis oleh AI</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <!-- File Upload -->
+                <div>
+                    <label for="file" class="block text-2xl font-bold text-black mb-4">
+                        📁 Pilih File
+                    </label>
+                    <input type="file" name="file" id="file"  
+                           class="file-input w-full p-4 border-4 border-black bg-neon-blue font-bold text-black neobrutalism-shadow-sm">
+                </div>
+
+                <!-- Input Type Selection -->
+                <div>
+                    <label for="input_type" class="block text-2xl font-bold text-black mb-4">
+                        🎯 Metode Deteksi
+                    </label>
+                    <select name="input_type" id="input_type" required onchange="redirectToWebcam()"
+                            class="w-full p-4 border-4 border-black bg-neon-pink font-bold text-black neobrutalism-shadow-sm text-xl">
+                        <option value="image">📸 Analisis Gambar</option>
+                        <option value="video">🎥 Pemrosesan Video</option>
+                        <option value="webcam">📹 Webcam Langsung</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" 
+                            class="bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-black hover:bg-neon-blue transition-colors transform hover:scale-105">
+                        🚀 MULAI ANALISIS
+                    </button>
+                </div>
+            </form>
+
+            <!-- Hidden webcam link -->
+            <a href="{{ url_for('stream_webcam') }}" id="webcamLink" class="hidden"></a>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-black border-4 border-black neobrutalism-shadow p-6 mb-8">
+            <h3 class="text-2xl font-bold text-neon-green mb-4">📋 Petunjuk Penggunaan</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-neon-yellow border-2 border-white p-4">
+                    <h4 class="font-bold text-black mb-2">📸 Metode Gambar</h4>
+                    <p class="text-black font-bold text-sm">Unggah foto yang jelas dari daun cabai untuk deteksi penyakit</p>
+                </div>
+                <div class="bg-neon-pink border-2 border-white p-4">
+                    <h4 class="font-bold text-black mb-2">🎥 Metode Video</h4>
+                    <p class="text-black font-bold text-sm">Proses file video frame demi frame untuk analisis komprehensif</p>
+                </div>
+                <div class="bg-neon-blue border-2 border-white p-4">
+                    <h4 class="font-bold text-black mb-2">📹 Metode Webcam</h4>
+                    <p class="text-black font-bold text-sm">Deteksi real-time menggunakan kamera perangkat Anda</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        {% if result_image %}
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
+            <h3 class="text-3xl font-bold text-black mb-6 text-center">🎯 Hasil Deteksi</h3>
+            
+            <div class="flex justify-center mb-8">
+                <div class="border-4 border-black neobrutalism-shadow-sm">
+                    <img src="{{ result_image }}" alt="Hasil Analisis" class="max-w-full h-auto">
+                </div>
+            </div>
+
+            <!-- Disease-Specific Information -->
+            {% if has_detections %}
+                {% for disease in detected_diseases %}
+                <div class="bg-black border-4 border-black neobrutalism-shadow-sm p-6 mb-6">
+                    <div class="text-center mb-6">
+                        <h4 class="text-4xl font-bold text-neon-green mb-2">
+                            {{ disease.icon }} {{ disease.name }} Terdeteksi
+                        </h4>
+                        {% if disease.confidence %}
+                        <p class="text-neon-blue font-bold text-xl">
+                            Tingkat Kepercayaan: {{ "%.1f"|format(disease.confidence * 100) }}%
+                        </p>
+                        {% endif %}
+                        <p class="text-white font-bold text-lg mt-2">{{ disease.description }}</p>
+                    </div>
+
+                    <!-- Symptoms -->
+                    <div class="bg-neon-yellow border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                        <h5 class="text-2xl font-bold text-black mb-3">🔍 Gejala yang Terlihat:</h5>
+                        <ul class="space-y-2">
+                            {% for symptom in disease.symptoms %}
+                            <li class="text-black font-bold flex items-start">
+                                <span class="text-red-600 mr-2">▶</span>
+                                {{ symptom }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Treatment Recommendations -->
+                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                        <h5 class="text-2xl font-bold text-black mb-3">💊 Saran Penanganan:</h5>
+                        <div class="space-y-2">
+                            {% for treatment in disease.treatments %}
+                            <div class="treatment-item">
+                                <p class="text-black font-bold flex items-start">
+                                    <span class="text-green-800 mr-2 font-bold">✓</span>
+                                    {{ treatment }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Prevention Tips -->
+                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4">
+                        <h5 class="text-2xl font-bold text-black mb-3">🛡️ Tips Pencegahan:</h5>
+                        <div class="space-y-2">
+                            {% for prevention in disease.prevention %}
+                            <div class="prevention-item">
+                                <p class="text-black font-bold flex items-start">
+                                    <span class="text-purple-800 mr-2 font-bold">🔰</span>
+                                    {{ prevention }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="bg-green-500 border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <h4 class="text-3xl font-bold text-black mb-2">✅ Tanaman Sehat!</h4>
+                <p class="text-black font-bold text-lg">Tidak ada penyakit yang terdeteksi pada tanaman cabai Anda. Terus jaga kesehatan tanaman dengan perawatan rutin!</p>
+                
+                <div class="bg-white border-2 border-black p-4 mt-4">
+                    <h5 class="text-xl font-bold text-black mb-2">💡 Tips Perawatan Rutin:</h5>
+                    <ul class="text-black font-bold text-sm space-y-1 text-left">
+                        <li>• Siram secara teratur sesuai kebutuhan</li>
+                        <li>• Berikan pupuk seimbang setiap 2 minggu</li>
+                        <li>• Periksa tanaman setiap 2-3 hari</li>
+                        <li>• Jaga kebersihan area sekitar tanaman</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if result_video %}
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
+            <h3 class="text-3xl font-bold text-black mb-6 text-center">🎥 Hasil Analisis Video</h3>
+            <div class="flex justify-center mb-6">
+                <div class="border-4 border-black neobrutalism-shadow-sm">
+                    <video controls class="max-w-full h-auto">
+                        <source src="{{ result_video }}" type="video/mp4">
+                        Browser Anda tidak mendukung tag video.
+                    </video>
+                </div>
+            </div>
+
+            <!-- Disease-Specific Information for Video -->
+            {% if has_detections %}
+                {% for disease in detected_diseases %}
+                <div class="bg-black border-4 border-black neobrutalism-shadow-sm p-6 mb-6">
+                    <div class="text-center mb-6">
+                        <h4 class="text-4xl font-bold text-neon-green mb-2">
+                            {{ disease.icon }} {{ disease.name }} Terdeteksi
+                        </h4>
+                        <p class="text-white font-bold text-lg">{{ disease.description }}</p>
+                    </div>
+
+                    <!-- Treatment Recommendations for Video -->
+                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                        <h5 class="text-2xl font-bold text-black mb-3">💊 Saran Penanganan Segera:</h5>
+                        <div class="space-y-2">
+                            {% for treatment in disease.treatments %}
+                            <div class="treatment-item">
+                                <p class="text-black font-bold flex items-start">
+                                    <span class="text-green-800 mr-2 font-bold">✓</span>
+                                    {{ treatment }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="bg-green-500 border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <h4 class="text-3xl font-bold text-black mb-2">✅ Video Menunjukkan Tanaman Sehat!</h4>
+                <p class="text-black font-bold text-lg">Tidak ada penyakit yang terdeteksi dalam video. Tanaman cabai Anda terlihat dalam kondisi baik!</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4">
+            <a href="/" class="bg-black border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors">
+                ← Kembali ke Beranda
+            </a>
+            <a href="/stream_webcam" class="bg-neon-blue border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-black hover:bg-neon-pink transition-colors">
+                📹 Gunakan Webcam
+            </a>
+        </div>
+    </div>
+
+    <!-- Custom Modal/Pop-up -->
+    <div id="warningModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-neon-pink border-4 border-black neobrutalism-shadow p-8 max-w-md mx-4">
+            <div class="text-center">
+                <div class="text-6xl mb-4">⚠️</div>
+                <h3 class="text-2xl font-bold text-black mb-4">File Tidak Dipilih</h3>
+                <p class="text-black font-bold mb-6">Silakan unggah file gambar atau video untuk di analisis.</p>
+                <button onclick="closeModal()" class="bg-black border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-xl font-bold text-neon-green hover:bg-neon-blue hover:text-black transition-colors">
+                    OK, Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function redirectToWebcam() {
+            var inputType = document.getElementById("input_type").value;
+            var webcamLink = document.getElementById("webcamLink");
+
+            if (inputType === "webcam") {
+                window.location.href = webcamLink.href;
+            }
+        }
+
+        // File validation before form submission
+        function validateForm(event) {
+            var fileInput = document.getElementById('file');
+            var inputType = document.getElementById('input_type').value;
+            
+            // Skip validation for webcam mode
+            if (inputType === 'webcam') {
+                return true;
+            }
+            
+            // Check if file is selected
+            if (!fileInput.files || fileInput.files.length === 0) {
+                event.preventDefault(); // Prevent form submission
+                showModal();
+                return false;
+            }
+            
+            return true;
+        }
+
+        function showModal() {
+            document.getElementById('warningModal').classList.remove('hidden');
+           
+        }
+
+        function closeModal() {
+            document.getElementById('warningModal').classList.add('hidden');
+            document.getElementById('warningModal').classList.remove('animate-pulse');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('warningModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Add event listener to form
+        document.querySelector('form').addEventListener('submit', validateForm);
+
+        // File input preview with visual feedback
+        document.getElementById('file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            const fileInput = this;
+            
+            if (fileName) {
+                // Add visual feedback when file is selected
+                fileInput.classList.remove('border-black');
+                fileInput.classList.add('border-neon-green');
+                
+                // Show file name
+                let fileNameDisplay = document.getElementById('fileName');
+                if (!fileNameDisplay) {
+                    fileNameDisplay = document.createElement('p');
+                    fileNameDisplay.id = 'fileName';
+                    fileNameDisplay.className = 'text-black font-bold mt-2 text-center';
+                    fileInput.parentNode.appendChild(fileNameDisplay);
+                }
+                fileNameDisplay.innerHTML = `✅ Dipilih: ${fileName}`;
+                fileNameDisplay.classList.remove('hidden');
+            } else {
+                // Reset visual feedback
+                fileInput.classList.remove('border-neon-green');
+                fileInput.classList.add('border-black');
+                
+                const fileNameDisplay = document.getElementById('fileName');
+                if (fileNameDisplay) {
+                    fileNameDisplay.classList.add('hidden');
+                }
+            }
+        });
+
+        // Add visual feedback for different input types
+        document.getElementById('input_type').addEventListener('change', function() {
+            const inputType = this.value;
+            const fileInputContainer = document.getElementById('file').parentNode;
+            
+            if (inputType === 'webcam') {
+                fileInputContainer.style.opacity = '0.5';
+                document.getElementById('file').disabled = true;
+            } else {
+                fileInputContainer.style.opacity = '1';
+                document.getElementById('file').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

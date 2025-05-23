@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/chilinet-no-text.png') }}" />
     <title>ChiliNet - Live Webcam Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -47,6 +48,9 @@
         }
         .treatment-item:hover {
             transform: translateX(5px);
+        }
+        .distribution-bar {
+            transition: width 0.5s ease-in-out;
         }
     </style>
     <script>
@@ -146,16 +150,115 @@
             // Clear previous content
             diseaseContainer.innerHTML = '';
             
+            // Add distribution summary if multiple diseases
+            if (diseases.length > 1) {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'bg-black border-4 border-neon-yellow neobrutalism-shadow p-6 mb-6';
+                
+                let summaryHTML = `
+                    <h4 class="text-2xl font-bold text-neon-yellow mb-4 text-center">📊 Distribusi Penyakit Terdeteksi</h4>
+                    <div class="space-y-3">
+                `;
+                
+                diseases.forEach(disease => {
+                    summaryHTML += `
+                        <div class="flex items-center justify-between bg-white border-2 border-black p-3">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">${disease.icon}</span>
+                                <div>
+                                    <span class="font-bold text-black">${disease.name}</span>
+                                    <div class="text-sm text-gray-600">
+                                        ${disease.detection_count || 1} deteksi | 
+                                        Avg: ${(disease.confidence * 100).toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-black">
+                                    ${(disease.distribution_percentage || 0).toFixed(1)}%
+                                </div>
+                                <div class="text-sm text-gray-600">dari total</div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full bg-gray-300 h-3 border-2 border-black">
+                            <div class="h-full bg-gradient-to-r from-red-500 to-orange-500 border-r-2 border-black distribution-bar" 
+                                 style="width: ${(disease.distribution_percentage || 0)}%"></div>
+                        </div>
+                    `;
+                });
+                
+                summaryHTML += `
+                    </div>
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="bg-neon-pink border-2 border-black p-3 text-center">
+                            <div class="text-xl font-bold text-black">${diseases.length}</div>
+                            <div class="text-sm font-bold text-black">Jenis Penyakit</div>
+                        </div>
+                        <div class="bg-neon-blue border-2 border-black p-3 text-center">
+                            <div class="text-xl font-bold text-black">
+                                ${diseases.reduce((sum, d) => sum + (d.detection_count || 1), 0)}
+                            </div>
+                            <div class="text-sm font-bold text-black">Total Deteksi</div>
+                        </div>
+                    </div>
+                `;
+                
+                summaryDiv.innerHTML = summaryHTML;
+                diseaseContainer.appendChild(summaryDiv);
+            }
+            
+            // Individual disease information
             diseases.forEach(disease => {
                 const diseaseDiv = document.createElement('div');
                 diseaseDiv.className = 'bg-black border-4 border-black neobrutalism-shadow-sm p-6 mb-4';
                 
+                // Determine priority
+                let priorityClass = 'bg-blue-500';
+                let priorityText = 'PANTAU';
+                let priorityAction = `📋 PANTAU! Penyakit minor (${(disease.distribution_percentage || 0).toFixed(1)}%). Lakukan monitoring rutin dan pencegahan.`;
+                
+                const distributionPercentage = disease.distribution_percentage || 0;
+                
+                if (distributionPercentage >= 50) {
+                    priorityClass = 'bg-red-500';
+                    priorityText = 'TINGGI';
+                    priorityAction = `🚨 SEGERA! Penyakit ini dominan (${distributionPercentage.toFixed(1)}%). Lakukan penanganan intensif segera.`;
+                } else if (distributionPercentage >= 30) {
+                    priorityClass = 'bg-yellow-500';
+                    priorityText = 'SEDANG';
+                    priorityAction = `⚠️ PENTING! Penyakit signifikan (${distributionPercentage.toFixed(1)}%). Rencanakan penanganan dalam 1-2 hari.`;
+                }
+                
                 diseaseDiv.innerHTML = `
                     <div class="text-center mb-4">
                         <h4 class="text-3xl font-bold text-neon-green mb-2">
-                            ${disease.icon} ${disease.name} Terdeteksi
+                            ${disease.icon} ${disease.name} 
+                            ${diseases.length > 1 ? `<span class="text-neon-pink">(${distributionPercentage.toFixed(1)}%)</span>` : ''}
                         </h4>
-                        ${disease.confidence ? `<p class="text-neon-blue font-bold text-lg">Kepercayaan: ${(disease.confidence * 100).toFixed(1)}%</p>` : ''}
+                        
+                        <!-- Enhanced Stats -->
+                        <div class="grid grid-cols-2 ${diseases.length > 1 ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-2 mt-4">
+                            ${diseases.length > 1 ? `
+                            <div class="bg-neon-blue border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Distribusi</div>
+                                <div class="text-black font-bold">${distributionPercentage.toFixed(1)}%</div>
+                            </div>` : ''}
+                            <div class="bg-neon-yellow border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Confidence</div>
+                                <div class="text-black font-bold">${(disease.confidence * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="bg-neon-pink border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Deteksi</div>
+                                <div class="text-black font-bold">${disease.detection_count || 1}x</div>
+                            </div>
+                            <div class="bg-neon-green border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Prioritas</div>
+                                <div class="text-black font-bold">${priorityText}</div>
+                            </div>
+                        </div>
+                        
                         <p class="text-white font-bold mt-2">${disease.description}</p>
                     </div>
 
@@ -173,7 +276,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4">
+                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
                         <h5 class="text-xl font-bold text-black mb-3">🛡️ Tips Pencegahan:</h5>
                         <div class="space-y-1">
                             ${disease.prevention.map(prevention => 
@@ -183,6 +286,14 @@
                                 </p>`
                             ).join('')}
                         </div>
+                    </div>
+                    
+                    <!-- Priority-based Action Recommendation -->
+                    <div class="mt-4 p-4 border-4 border-white ${priorityClass}">
+                        <h6 class="font-bold text-black text-lg mb-2">
+                            ⚡ Tindakan Berdasarkan Prioritas:
+                        </h6>
+                        <p class="text-black font-bold">${priorityAction}</p>
                     </div>
                 `;
                 
@@ -217,14 +328,14 @@
         }
     </script>
 </head>
-<body onload="startWebcam()" class="bg-neon-yellow font-mono min-h-screen">
+<body onload="startWebcam()" class="bg-[#faae2b] font-mono min-h-screen">
     <!-- Navigation -->
     <nav class="bg-blue-500 border-4 border-black neobrutalism-shadow mb-8">
-        <div class=" mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
                 <div class="text-neon-green text-3xl font-bold flex gap-2 items-center">
                     <img src="{{ url_for('static', filename='assets/chilinet.png') }}" alt="Logo" class="h-14 w-14">
-                  <a href="/">ChiliNet</a>
+                    <a href="/">ChiliNet</a>
                 </div>
                 <div class="hidden md:flex space-x-8">
                     <a href="/" class="text-white hover:text-neon-blue transition-colors">← Kembali ke Beranda</a>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChiliNet - Disease Detection</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/chilinet-no-text.png') }}" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -45,9 +46,84 @@
         .file-input::-webkit-file-upload-button:hover {
             background: #ff10f0;
         }
+        .treatment-item {
+            background: linear-gradient(135deg, #39ff14, #00ffff);
+            margin-bottom: 8px;
+            padding: 12px;
+            border: 3px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            transition: transform 0.2s;
+        }
+        .treatment-item:hover {
+            transform: translateX(5px);
+        }
+        .prevention-item {
+            background: linear-gradient(135deg, #ff10f0, #ffff00);
+            margin-bottom: 6px;
+            padding: 8px;
+            border: 2px solid #000;
+            box-shadow: 2px 2px 0px #000;
+        }
+        .distribution-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        /* Loading animations */
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .bounce-animation {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        /* Overlay for loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
-<body class="bg-neon-yellow font-mono min-h-screen">
+<body class="bg-[#faae2b] font-mono min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay flex items-center justify-center">
+        <div class="bg-neon-blue border-4 border-black neobrutalism-shadow p-8 text-center max-w-md mx-4">
+            <div class="text-6xl mb-4 bounce-animation">🔄</div>
+            <h3 class="text-2xl font-bold text-black mb-4">Menganalisis File...</h3>
+            <p id="loadingMessage" class="text-black font-bold mb-6">Sedang memproses gambar dengan AI</p>
+            
+            <!-- Progress Animation -->
+            <div class="w-full bg-black h-4 border-2 border-black mb-4">
+                <div id="progressBar" class="h-full bg-neon-green transition-all duration-300" style="width: 0%"></div>
+            </div>
+            
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-4 border-black border-t-transparent"></div>
+            </div>
+            
+            <p class="text-black font-bold text-sm mt-4 pulse-animation">
+                Harap tunggu, jangan tutup halaman ini...
+            </p>
+        </div>
+    </div>
+    
     <!-- Navigation -->
     <nav class="bg-blue-500 border-4 border-black neobrutalism-shadow mb-8">
         <div class=" mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,14 +151,16 @@
 
         <!-- Upload Form -->
         <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
-            <form action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6" id="uploadForm">
                 <!-- File Upload -->
                 <div>
                     <label for="file" class="block text-2xl font-bold text-black mb-4">
                         📁 Pilih File
                     </label>
                     <input type="file" name="file" id="file"  
-                           class="file-input w-full p-4 border-4 border-black bg-neon-blue font-bold text-black neobrutalism-shadow-sm">
+                           class="file-input w-full p-4 border-4 border-black bg-neon-blue font-bold text-black neobrutalism-shadow-sm"
+                           accept=".png,.jpg,.jpeg,.webp,video/*">
+                    <p id="fileName" class="text-black font-bold mt-2 text-center hidden"></p>
                 </div>
 
                 <!-- Input Type Selection -->
@@ -100,7 +178,7 @@
 
                 <!-- Submit Button -->
                 <div class="text-center">
-                    <button type="submit" 
+                    <button type="submit" id="submitBtn"
                             class="bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-black hover:bg-neon-blue transition-colors transform hover:scale-105">
                         🚀 MULAI ANALISIS
                     </button>
@@ -109,6 +187,29 @@
 
             <!-- Hidden webcam link -->
             <a href="{{ url_for('stream_webcam') }}" id="webcamLink" class="hidden"></a>
+        </div>
+
+        <!-- Disease Database (Static - Always Visible) -->
+        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 my-8">
+            <h3 class="text-3xl font-bold text-black mb-6 text-center">🦠 Penyakit yang Dapat Dideteksi</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🔴 Leaf Spot</h4>
+                    <p class="text-black font-bold text-sm text-center">Penyakit jamur dengan bercak coklat/hitam yang mengurangi fotosintesis dan hasil panen.</p>
+                </div>
+                <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🌀 Leaf Curl</h4>
+                    <p class="text-black font-bold text-sm text-center">Penyakit virus yang menyebabkan daun keriting, sering ditularkan oleh kutu daun.</p>
+                </div>
+                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">🪰 Whitefly</h4>
+                    <p class="text-black font-bold text-sm text-center">Hama yang menyebabkan daun menguning dengan menghisap cairan tanaman dan menularkan virus.</p>
+                </div>
+                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-4">
+                    <h4 class="font-bold text-black mb-2 text-center">💛 Yellowish</h4>
+                    <p class="text-black font-bold text-sm text-center">Menguning secara umum yang menunjukkan kekurangan nutrisi atau stres tanaman.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Instructions -->
@@ -141,19 +242,96 @@
                 </div>
             </div>
 
+            <!-- Disease Distribution Summary (if multiple diseases) -->
+            {% if has_detections and detected_diseases|length > 1 %}
+            <div class="bg-black border-4 border-neon-yellow neobrutalism-shadow p-6 mb-6">
+                <h4 class="text-2xl font-bold text-neon-yellow mb-4 text-center">📊 Distribusi Penyakit Terdeteksi</h4>
+                
+                <div class="space-y-3">
+                    {% for disease in detected_diseases %}
+                    <div class="flex items-center justify-between bg-white border-2 border-black p-3">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">{{ disease.icon }}</span>
+                            <div>
+                                <span class="font-bold text-black">{{ disease.name }}</span>
+                                <div class="text-sm text-gray-600">
+                                    {{ disease.detection_count or 1 }} deteksi | 
+                                    Avg: {{ "%.1f"|format(disease.confidence * 100) }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-black">
+                                {{ "%.1f"|format(disease.distribution_percentage or 0) }}%
+                            </div>
+                            <div class="text-sm text-gray-600">dari total</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-300 h-3 border-2 border-black">
+                        <div class="h-full bg-gradient-to-r from-red-500 to-orange-500 border-r-2 border-black distribution-bar" 
+                             style="width: {% if disease.distribution_percentage is defined %}{{ disease.distribution_percentage }}{% else %}0{% endif %}%"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Summary Stats -->
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <div class="bg-neon-pink border-2 border-black p-3 text-center">
+                        <div class="text-xl font-bold text-black">{{ detected_diseases|length }}</div>
+                        <div class="text-sm font-bold text-black">Jenis Penyakit</div>
+                    </div>
+                    <div class="bg-neon-blue border-2 border-black p-3 text-center">
+                        <div class="text-xl font-bold text-black">
+                            {{ detected_diseases|sum(attribute='detection_count') or detected_diseases|length }}
+                        </div>
+                        <div class="text-sm font-bold text-black">Total Deteksi</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Disease-Specific Information -->
             {% if has_detections %}
                 {% for disease in detected_diseases %}
                 <div class="bg-black border-4 border-black neobrutalism-shadow-sm p-6 mb-6">
                     <div class="text-center mb-6">
                         <h4 class="text-4xl font-bold text-neon-green mb-2">
-                            {{ disease.icon }} {{ disease.name }} Terdeteksi
+                            {{ disease.icon }} {{ disease.name }}
+                            {% if detected_diseases|length > 1 %}
+                                <span class="text-neon-pink">({{ "%.1f"|format(disease.distribution_percentage or 0) }}%)</span>
+                            {% endif %}
                         </h4>
-                        {% if disease.confidence %}
-                        <p class="text-neon-blue font-bold text-xl">
-                            Tingkat Kepercayaan: {{ "%.1f"|format(disease.confidence * 100) }}%
-                        </p>
-                        {% endif %}
+                        
+                        <!-- Enhanced Stats -->
+                        <div class="grid grid-cols-2 {% if detected_diseases|length > 1 %}md:grid-cols-4{% else %}md:grid-cols-3{% endif %} gap-2 mt-4">
+                            {% if detected_diseases|length > 1 %}
+                            <div class="bg-neon-blue border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Distribusi</div>
+                                <div class="text-black font-bold">{{ "%.1f"|format(disease.distribution_percentage or 0) }}%</div>
+                            </div>
+                            {% endif %}
+                            <div class="bg-neon-yellow border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Confidence</div>
+                                <div class="text-black font-bold">{{ "%.1f"|format(disease.confidence * 100) }}%</div>
+                            </div>
+                            <div class="bg-neon-pink border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Deteksi</div>
+                                <div class="text-black font-bold">{{ disease.detection_count or 1 }}x</div>
+                            </div>
+                            <div class="bg-neon-green border-2 border-white p-2">
+                                <div class="text-black font-bold text-sm">Prioritas</div>
+                                <div class="text-black font-bold">
+                                    {% set dist_pct = disease.distribution_percentage or 100 %}
+                                    {% if dist_pct >= 50 %}TINGGI
+                                    {% elif dist_pct >= 30 %}SEDANG
+                                    {% else %}RENDAH{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
                         <p class="text-white font-bold text-lg mt-2">{{ disease.description }}</p>
                     </div>
 
@@ -186,7 +364,7 @@
                     </div>
 
                     <!-- Prevention Tips -->
-                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4">
+                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
                         <h5 class="text-2xl font-bold text-black mb-3">🛡️ Tips Pencegahan:</h5>
                         <div class="space-y-2">
                             {% for prevention in disease.prevention %}
@@ -198,6 +376,26 @@
                             </div>
                             {% endfor %}
                         </div>
+                    </div>
+                    
+                    <!-- Priority-based Action Recommendation -->
+                    {% set dist_pct = disease.distribution_percentage or 100 %}
+                    <div class="mt-4 p-4 border-4 border-white 
+                                {% if dist_pct >= 50 %}bg-red-500
+                                {% elif dist_pct >= 30 %}bg-yellow-500
+                                {% else %}bg-blue-500{% endif %}">
+                        <h6 class="font-bold text-black text-lg mb-2">
+                            ⚡ Tindakan Berdasarkan Prioritas:
+                        </h6>
+                        <p class="text-black font-bold">
+                            {% if dist_pct >= 50 %}
+                                🚨 SEGERA! Penyakit ini dominan ({{ "%.1f"|format(dist_pct) }}%). Lakukan penanganan intensif segera.
+                            {% elif dist_pct >= 30 %}
+                                ⚠️ PENTING! Penyakit signifikan ({{ "%.1f"|format(dist_pct) }}%). Rencanakan penanganan dalam 1-2 hari.
+                            {% else %}
+                                📋 PANTAU! Penyakit minor ({{ "%.1f"|format(dist_pct) }}%). Lakukan monitoring rutin dan pencegahan.
+                            {% endif %}
+                        </p>
                     </div>
                 </div>
                 {% endfor %}
@@ -268,7 +466,6 @@
         </div>
         {% endif %}
 
-
         <!-- Action Buttons -->
         <div class="flex justify-center space-x-4">
             <a href="/" class="bg-black border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors">
@@ -295,100 +492,246 @@
     </div>
 
     <script>
-        function redirectToWebcam() {
-            var inputType = document.getElementById("input_type").value;
-            var webcamLink = document.getElementById("webcamLink");
+      // Enhanced form submission with loading - FIXED VERSION
+function validateForm(event) {
+    var fileInput = document.getElementById('file');
+    var inputType = document.getElementById('input_type').value;
+    
+    // Skip validation for webcam mode
+    if (inputType === 'webcam') {
+        return true;
+    }
+    
+    // Check if file is selected
+    if (!fileInput.files || fileInput.files.length === 0) {
+        event.preventDefault(); // Prevent form submission
+        showModal();
+        return false;
+    }
+    
+    // Show loading overlay AFTER validation passes
+    // Don't prevent the form submission - let it proceed normally
+    showLoadingOverlay(inputType);
+    return true; // Allow form to submit
+}
 
-            if (inputType === "webcam") {
-                window.location.href = webcamLink.href;
-            }
+function showLoadingOverlay(inputType) {
+    const overlay = document.getElementById('loadingOverlay');
+    const message = document.getElementById('loadingMessage');
+    const progressBar = document.getElementById('progressBar');
+    
+    // Set appropriate message
+    if (inputType === 'image') {
+        message.textContent = 'Sedang menganalisis gambar dengan AI...';
+    } else if (inputType === 'video') {
+        message.textContent = 'Sedang memproses video frame demi frame...';
+    }
+    
+    // Show overlay
+    overlay.style.display = 'flex';
+    
+    // Animate progress bar
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10 + 5; // Faster progress
+        if (progress > 95) progress = 95; // Don't reach 100% until actually done
+        progressBar.style.width = progress + '%';
+    }, 300);
+    
+    // Store interval to clear it later if needed
+    window.loadingInterval = interval;
+}
+
+function showModal() {
+    document.getElementById('warningModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('warningModal').classList.add('hidden');
+    document.getElementById('warningModal').classList.remove('animate-pulse');
+}
+
+// Close modal when clicking outside
+document.getElementById('warningModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Add event listener to form - MODIFIED
+document.querySelector('form').addEventListener('submit', validateForm);
+
+// File input preview with enhanced visual feedback
+document.getElementById('file').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name;
+    const fileSize = e.target.files[0]?.size;
+    const fileInput = this;
+    
+    if (fileName) {
+        // Add visual feedback when file is selected
+        fileInput.classList.remove('border-black');
+        fileInput.classList.add('border-neon-green');
+        
+        // Show file name and size
+        let fileNameDisplay = document.getElementById('fileName');
+        if (!fileNameDisplay) {
+            fileNameDisplay = document.createElement('p');
+            fileNameDisplay.id = 'fileName';
+            fileNameDisplay.className = 'text-black font-bold mt-2 text-center';
+            fileInput.parentNode.appendChild(fileNameDisplay);
         }
-
-        // File validation before form submission
-        function validateForm(event) {
-            var fileInput = document.getElementById('file');
-            var inputType = document.getElementById('input_type').value;
-            
-            // Skip validation for webcam mode
-            if (inputType === 'webcam') {
-                return true;
-            }
-            
-            // Check if file is selected
-            if (!fileInput.files || fileInput.files.length === 0) {
-                event.preventDefault(); // Prevent form submission
-                showModal();
-                return false;
-            }
-            
-            return true;
+        
+        // Format file size
+        const formatFileSize = (bytes) => {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+        
+        fileNameDisplay.innerHTML = `
+            <span class="inline-block bg-neon-green border-2 border-black p-2 text-sm">
+                ✅ File Dipilih: <strong>${fileName}</strong><br>
+                📊 Ukuran: ${formatFileSize(fileSize)}
+            </span>
+        `;
+        fileNameDisplay.classList.remove('hidden');
+        
+        // Update submit button
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.classList.remove('bg-neon-green');
+        submitBtn.classList.add('bg-neon-pink');
+        submitBtn.innerHTML = '🚀 ANALISIS FILE TERPILIH';
+        
+    } else {
+        // Reset visual feedback
+        fileInput.classList.remove('border-neon-green');
+        fileInput.classList.add('border-black');
+        
+        const fileNameDisplay = document.getElementById('fileName');
+        if (fileNameDisplay) {
+            fileNameDisplay.classList.add('hidden');
         }
+        
+        // Reset submit button
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.classList.remove('bg-neon-pink');
+        submitBtn.classList.add('bg-neon-green');
+        submitBtn.innerHTML = '🚀 MULAI ANALISIS';
+    }
+});
 
-        function showModal() {
-            document.getElementById('warningModal').classList.remove('hidden');
-           
+// Add visual feedback for different input types
+document.getElementById('input_type').addEventListener('change', function() {
+    const inputType = this.value;
+    const fileInputContainer = document.getElementById('file').parentNode;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (inputType === 'webcam') {
+        fileInputContainer.style.opacity = '0.5';
+        document.getElementById('file').disabled = true;
+        submitBtn.innerHTML = '📹 BERALIH KE WEBCAM';
+    } else {
+        fileInputContainer.style.opacity = '1';
+        document.getElementById('file').disabled = false;
+        
+        // Update button text based on type
+        if (inputType === 'image') {
+            submitBtn.innerHTML = '📸 ANALISIS GAMBAR';
+        } else if (inputType === 'video') {
+            submitBtn.innerHTML = '🎥 PROSES VIDEO';
         }
+    }
+});
 
-        function closeModal() {
-            document.getElementById('warningModal').classList.add('hidden');
-            document.getElementById('warningModal').classList.remove('animate-pulse');
+// Enhanced file validation
+document.getElementById('file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const inputType = document.getElementById('input_type').value;
+    
+    if (file) {
+        const fileType = file.type;
+        const fileSize = file.size;
+        const maxSize = 100 * 1024 * 1024; // 100MB limit
+        
+        // Validate file type
+        if (inputType === 'image' && !fileType.startsWith('image/')) {
+            alert('⚠️ Silakan pilih file gambar untuk mode Analisis Gambar!');
+            this.value = '';
+            return;
         }
+        
+        if (inputType === 'video' && !fileType.startsWith('video/')) {
+            alert('⚠️ Silakan pilih file video untuk mode Pemrosesan Video!');
+            this.value = '';
+            return;
+        }
+        
+        // Validate file size
+        if (fileSize > maxSize) {
+            alert('⚠️ Ukuran file terlalu besar! Maksimal 100MB.');
+            this.value = '';
+            return;
+        }
+        
+        // Show success feedback
+        const fileName = document.getElementById('fileName');
+        if (fileName) {
+            fileName.classList.add('pulse-animation');
+            setTimeout(() => {
+                fileName.classList.remove('pulse-animation');
+            }, 2000);
+        }
+    }
+});
 
-        // Close modal when clicking outside
-        document.getElementById('warningModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+// REMOVED: The problematic event listener that was blocking form submission
+// This was the main cause of the issue:
+// document.getElementById('uploadForm').addEventListener('submit', function(e) {
+//     const overlay = document.getElementById('loadingOverlay');
+//     if (overlay.style.display === 'flex') {
+//         e.preventDefault();
+//         return false;
+//     }
+// });
 
-        // Add event listener to form
-        document.querySelector('form').addEventListener('submit', validateForm);
+// Auto-hide loading on page load (if coming back from server)
+window.addEventListener('load', function() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    
+    // Clear any existing interval
+    if (window.loadingInterval) {
+        clearInterval(window.loadingInterval);
+    }
+});
 
-        // File input preview with visual feedback
-        document.getElementById('file').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name;
-            const fileInput = this;
-            
-            if (fileName) {
-                // Add visual feedback when file is selected
-                fileInput.classList.remove('border-black');
-                fileInput.classList.add('border-neon-green');
-                
-                // Show file name
-                let fileNameDisplay = document.getElementById('fileName');
-                if (!fileNameDisplay) {
-                    fileNameDisplay = document.createElement('p');
-                    fileNameDisplay.id = 'fileName';
-                    fileNameDisplay.className = 'text-black font-bold mt-2 text-center';
-                    fileInput.parentNode.appendChild(fileNameDisplay);
-                }
-                fileNameDisplay.innerHTML = `✅ Dipilih: ${fileName}`;
-                fileNameDisplay.classList.remove('hidden');
-            } else {
-                // Reset visual feedback
-                fileInput.classList.remove('border-neon-green');
-                fileInput.classList.add('border-black');
-                
-                const fileNameDisplay = document.getElementById('fileName');
-                if (fileNameDisplay) {
-                    fileNameDisplay.classList.add('hidden');
-                }
-            }
-        });
+// Handle browser back button
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+        
+        if (window.loadingInterval) {
+            clearInterval(window.loadingInterval);
+        }
+    }
+});
 
-        // Add visual feedback for different input types
-        document.getElementById('input_type').addEventListener('change', function() {
-            const inputType = this.value;
-            const fileInputContainer = document.getElementById('file').parentNode;
-            
-            if (inputType === 'webcam') {
-                fileInputContainer.style.opacity = '0.5';
-                document.getElementById('file').disabled = true;
-            } else {
-                fileInputContainer.style.opacity = '1';
-                document.getElementById('file').disabled = false;
-            }
-        });
+// Add function to redirect to webcam
+function redirectToWebcam() {
+    var inputType = document.getElementById("input_type").value;
+    var webcamLink = document.getElementById("webcamLink");
+
+    if (inputType === "webcam") {
+        window.location.href = webcamLink.href;
+    }
+}
     </script>
 </body>
 </html>

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/chilinet-no-text.png') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>ChiliNet - AI Chili Disease Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -33,6 +35,15 @@
         .neobrutalism-text-shadow {
             text-shadow: 3px 3px 0px #000;
         }
+        .faq-arrow {
+    transition: transform 0.3s ease;
+}
+.faq-item.active .faq-arrow {
+    transform: rotate(45deg);
+}
+.faq-answer {
+    transition: all 0.3s ease;
+}
     </style>
 </head>
 <body class="bg-neon-yellow font-mono">
@@ -56,10 +67,14 @@
 
     <!-- Hero Section -->
     <section class="max-w-7xl mx-auto px-4 py-16">
-        <div class="text-center">
-            <h1 class="text-6xl md:text-8xl font-bold text-black neobrutalism-text-shadow mb-6">
+        <div class="text-center items-center">
+           <div class="flex gap-2  text-center justify-center">
+            
+            <img src="{{ url_for('static', filename='assets/chilinet-no-text.png') }}" alt="Logo" class="h-24 w-24">
+            <h1 class="text-6xl md:text-8xl font-bold text-white neobrutalism-text-shadow mb-6">
                 ChiliNet
             </h1>
+           </div>
             <p class="text-2xl md:text-3xl text-black font-bold mb-8">
                 Deteksi Penyakit pada Tanaman Cabai Menggunakan Kecerdasan Buatan
             </p>
@@ -137,20 +152,23 @@
     <!-- Team Section -->
     <section id="team" class="max-w-7xl mx-auto px-4 py-16">
         <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
-            <h2 class="text-4xl font-bold text-black mb-8 text-center">Meet Our Team</h2>
+            <h2 class="text-4xl font-bold text-black mb-8 text-center">Kenali Tim Kami</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-6 text-center">
                     <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
                         <img src="{{ url_for('static', filename='assets/naruto.jpg') }}" alt="Team Member 1" class="w-full h-full object-cover">
                     </div>
-                    <h3 class="text-xl font-bold text-black mb-2">Nabil Irwansayh</h3>
+                    <h3 class="text-xl font-bold text-black mb-2">Nabil Irwansyah</h3>
+                    <h3 class="font-bold text-black ">12220136</h3>
                     <p class="text-black font-bold">AI Developer</p>
+
                 </div>
                 <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 text-center">
                     <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
                         <img src="{{ url_for('static', filename='assets/Sakura.webp') }}" alt="Team Member 2" class="w-full h-full object-cover">
                     </div>
                     <h3 class="text-xl font-bold text-black mb-2">Annisa Nur Amelia</h3>
+                    <h3 class="font-bold text-black ">12220097</h3>
                     <p class="text-black font-bold">Data Scientist</p>
                 </div>
                 <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6 text-center">
@@ -158,42 +176,387 @@
                         <img src="{{ url_for('static', filename='assets/itachi.avif') }}" alt="Team Member 3" class="w-full h-full object-cover">
                     </div>
                     <h3 class="text-xl font-bold text-black mb-2">Anjas Rani</h3>
+                    <h3 class="font-bold text-black ">12220107</h3>
                     <p class="text-black font-bold">Frontend Developer</p>
                 </div>
                 <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-6 text-center">
                     <div class="w-32 h-32 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center">
-                        <img src="{{ url_for('static', filename='assets/Kakashi.jpg') }}" alt="Team Member 4" class="w-full h-full object-cover">
+                        <img src="{{ url_for('static', filename='assets/p7.jpeg') }}" alt="Team Member 4" class="w-full h-full object-cover">
                     </div>
                     <h3 class="text-xl font-bold text-black mb-2">Ridwan Saputra</h3>
+                    <h3 class="font-bold text-black ">12220094</h3>
                     <p class="text-black font-bold">Agricultural Expert</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="max-w-7xl mx-auto px-4 py-16">
-        <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
-            <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Fitur Unggulan</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-white border-4 border-neon-green neobrutalism-shadow-sm p-6 text-center">
-                    <div class="text-4xl mb-4">📸</div>
-                    <h3 class="text-xl font-bold text-black mb-2">Unggah Gambar</h3>
-                    <p class="text-black font-bold">Unggah foto tanaman cabai Anda untuk analisis instan</p>
+<!-- Features Section -->
+<section class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Fitur Unggulan</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- AI Computer Vision -->
+            <div class="bg-white border-4 border-neon-green neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4">🤖</div>
+                <h3 class="text-xl font-bold text-black mb-2">AI Computer Vision</h3>
+                <p class="text-black font-bold">Deep Learning dengan CNN untuk deteksi otomatis penyakit melalui analisis visual daun cabai dengan akurasi tinggi</p>
+            </div>
+
+            <!-- Real-time Analysis -->
+            <div class="bg-white border-4 border-neon-pink neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4">⚡</div>
+                <h3 class="text-xl font-bold text-black mb-2">Analisis Real-time</h3>
+                <p class="text-black font-bold">Deteksi instan dalam hitungan detik menggunakan teknologi edge computing untuk hasil cepat dan akurat</p>
+            </div>
+
+            <!-- Multi-format Support -->
+            <div class="bg-white border-4 border-neon-blue neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4">📱</div>
+                <h3 class="text-xl font-bold text-black mb-2">Multi-format Input</h3>
+                <p class="text-black font-bold">Mendukung foto, video, dan streaming kamera langsung untuk fleksibilitas maksimal dalam penggunaan</p>
+            </div>
+        </div>
+
+        <!-- Additional Features Row -->
+        <div class="grid md:grid-cols-4 gap-6 mt-8">
+            <!-- Early Detection -->
+            <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-3xl mb-3">🔍</div>
+                <h3 class="text-lg font-bold text-black mb-2">Deteksi Dini</h3>
+                <p class="text-black font-bold text-sm">Identifikasi penyakit sebelum gejala terlihat jelas dengan teknologi predictive analysis</p>
+            </div>
+
+            <!-- Feature Extraction -->
+            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-3xl mb-3">🧬</div>
+                <h3 class="text-lg font-bold text-black mb-2">Feature Extraction</h3>
+                <p class="text-black font-bold text-sm">Ekstraksi fitur GLCM, tekstur, dan morfologi untuk analisis mendalam kondisi tanaman</p>
+            </div>
+
+            <!-- Confidence Score -->
+            <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-3xl mb-3">📊</div>
+                <h3 class="text-lg font-bold text-black mb-2">Confidence Score</h3>
+                <p class="text-black font-bold text-sm">Skor kepercayaan hasil deteksi dengan persentase akurasi untuk setiap diagnosis</p>
+            </div>
+
+            <!-- Treatment Recommendation -->
+            <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-3xl mb-3">💊</div>
+                <h3 class="text-lg font-bold text-black mb-2">Rekomendasi Perawatan</h3>
+                <p class="text-black font-bold text-sm">Saran pengobatan dan pencegahan yang tepat berdasarkan jenis penyakit yang terdeteksi</p>
+            </div>
+        </div>
+
+        <!-- Technical Capabilities -->
+        <div class="mt-8 bg-gradient-to-r from-purple-600 to-blue-600 border-4 border-white neobrutalism-shadow-sm p-6">
+            <h3 class="text-2xl font-bold text-white text-center mb-6">🔬 Kemampuan Teknis</h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-neon-green rounded-full"></div>
+                        <span class="text-white font-bold">Segmentasi Otomatis dengan SegNet</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-neon-pink rounded-full"></div>
+                        <span class="text-white font-bold">Transfer Learning dengan Pre-trained Models</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-neon-blue rounded-full"></div>
+                        <span class="text-white font-bold">Data Augmentation untuk Dataset Robust</span>
+                    </div>
                 </div>
-                <div class="bg-white border-4 border-neon-pink neobrutalism-shadow-sm p-6 text-center">
-                    <div class="text-4xl mb-4">🎥</div>
-                    <h3 class="text-xl font-bold text-black mb-2">Pemrosesan Video</h3>
-                    <p class="text-black font-bold">Analisis klip video secara menyeluruh, bingkai demi bingkai</p>
-                </div>
-                <div class="bg-white border-4 border-neon-blue neobrutalism-shadow-sm p-6 text-center">
-                    <div class="text-4xl mb-4">📹</div>
-                    <h3 class="text-xl font-bold text-black mb-2">Kamera Real-time</h3>
-                    <p class="text-black font-bold">Deteksi langsung menggunakan kamera perangkat Anda</p>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-neon-yellow rounded-full"></div>
+                        <span class="text-white font-bold">YOLOv5 untuk Object Detection</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-orange-400 rounded-full"></div>
+                        <span class="text-white font-bold">Ensemble Methods untuk Akurasi Optimal</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                        <span class="text-white font-bold">Edge Computing untuk Processing Cepat</span>
+                    </div>
                 </div>
             </div>
-        </div>        
-    </section>
+        </div>
+    </div>        
+</section>
+<!-- Coming Soon Section -->
+<section class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-black mb-8 text-center">🚀 Coming Soon</h2>
+        <p class="text-xl text-black font-bold text-center mb-12">
+            Fitur-fitur canggih yang sedang dalam pengembangan untuk pengalaman yang lebih lengkap
+        </p>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Authentication System -->
+            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 text-center relative">
+                <div class="absolute top-2 right-2 bg-black text-neon-green px-2 py-1 text-xs font-bold border-2 border-neon-green">
+                    BETA
+                </div>
+                <div class="text-4xl mb-4">🔐</div>
+                <h3 class="text-xl font-bold text-black mb-2">Sistem Login</h3>
+                <p class="text-black font-bold text-sm">
+                    Daftar & masuk untuk menyimpan riwayat analisis dan mengakses dashboard pribadi
+                </p>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6 text-center relative">
+                <div class="absolute top-2 right-2 bg-black text-neon-yellow px-2 py-1 text-xs font-bold border-2 border-neon-yellow">
+                    Q2 2025
+                </div>
+                <div class="text-4xl mb-4">📊</div>
+                <h3 class="text-xl font-bold text-black mb-2">Dashboard</h3>
+                <p class="text-black font-bold text-sm">
+                    Pantau semua hasil analisis, statistik penyakit, dan trend kesehatan tanaman Anda
+                </p>
+            </div>
+
+            <!-- High Accuracy -->
+            <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-6 text-center relative">
+                <div class="absolute top-2 right-2 bg-black text-neon-pink px-2 py-1 text-xs font-bold border-2 border-neon-pink">
+                    98%
+                </div>
+                <div class="text-4xl mb-4">🎯</div>
+                <h3 class="text-xl font-bold text-black mb-2">Akurasi Tinggi</h3>
+                <p class="text-black font-bold text-sm">
+                    Model AI yang telah dilatih dengan dataset masif untuk akurasi deteksi hingga 98%
+                </p>
+            </div>
+
+            <!-- Report Export -->
+            <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-6 text-center relative">
+                <div class="absolute top-2 right-2 bg-black text-neon-blue px-2 py-1 text-xs font-bold border-2 border-neon-blue">
+                    NEW
+                </div>
+                <div class="text-4xl mb-4">📋</div>
+                <h3 class="text-xl font-bold text-black mb-2">Export Laporan</h3>
+                <p class="text-black font-bold text-sm">
+                    Download laporan bulanan dalam format Excel, PDF, atau Word untuk dokumentasi
+                </p>
+            </div>
+
+            <!-- IoT Integration -->
+            <div class="bg-purple-400 border-4 border-black neobrutalism-shadow-sm p-6 text-center relative">
+                <div class="absolute top-2 right-2 bg-black text-orange-400 px-2 py-1 text-xs font-bold border-2 border-orange-400">
+                    IOT
+                </div>
+                <div class="text-4xl mb-4">🌐</div>
+                <h3 class="text-xl font-bold text-black mb-2">Smart Sensors</h3>
+                <p class="text-black font-bold text-sm">
+                    Sensor IoT untuk monitoring kelembaban, suhu, dan kondisi tanah secara real-time
+                </p>
+            </div>
+        </div>
+
+        <!-- Additional Features Row -->
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Mobile App -->
+            <div class="bg-black border-4 border-neon-green neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4 text-neon-green">📱</div>
+                <h3 class="text-xl font-bold text-neon-green mb-2">Aplikasi Mobile</h3>
+                <p class="text-white font-bold text-sm">
+                    Aplikasi mobile untuk Android & iOS dengan fitur offline detection
+                </p>
+                <div class="mt-4 bg-neon-green text-black px-3 py-1 text-xs font-bold inline-block">
+                    Q3 2025
+                </div>
+            </div>
+
+            <!-- AI Chatbot -->
+            <div class="bg-black border-4 border-neon-pink neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4 text-neon-pink">🤖</div>
+                <h3 class="text-xl font-bold text-neon-pink mb-2">AI Assistant</h3>
+                <p class="text-white font-bold text-sm">
+                    Chatbot cerdas untuk konsultasi perawatan dan pencegahan penyakit
+                </p>
+                <div class="mt-4 bg-neon-pink text-black px-3 py-1 text-xs font-bold inline-block">
+                    Q4 2025
+                </div>
+            </div>
+
+            <!-- Multi-Language -->
+            <div class="bg-black border-4 border-neon-blue neobrutalism-shadow-sm p-6 text-center">
+                <div class="text-4xl mb-4 text-neon-blue">🌍</div>
+                <h3 class="text-xl font-bold text-neon-blue mb-2">Multi-Bahasa</h3>
+                <p class="text-white font-bold text-sm">
+                    Dukungan bahasa Indonesia, Inggris, dan bahasa daerah lainnya
+                </p>
+                <div class="mt-4 bg-neon-blue text-black px-3 py-1 text-xs font-bold inline-block">
+                    Q2 2025
+                </div>
+            </div>
+        </div>
+
+        <!-- Newsletter Signup -->
+        <div class="mt-12 bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+            <h3 class="text-2xl font-bold text-black mb-4">💌 Dapatkan Update Terbaru!</h3>
+            <p class="text-black font-bold mb-6">
+                Daftarkan email Anda untuk mendapat notifikasi ketika fitur baru dirilis
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                <input 
+                    type="email" 
+                    placeholder="Email Anda..." 
+                    class="flex-1 px-4 py-3 border-4 border-black font-bold text-black placeholder-gray-600 focus:outline-none focus:border-neon-blue"
+                >
+                <button class="bg-black border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-neon-green font-bold hover:bg-neon-blue hover:text-black transition-colors">
+                    Subscribe →
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-gradient-to-r from-neon-pink to-neon-blue border-4 border-black neobrutalism-shadow p-8">
+        <div class="text-center">
+            <h2 class="text-4xl font-bold text-white neobrutalism-text-shadow mb-6">💝 Dukung Pengembangan ChiliNet</h2>
+            <p class="text-xl text-black font-bold mb-8 max-w-3xl mx-auto">
+                ChiliNet adalah platform open-source yang dikembangkan untuk membantu petani Indonesia. 
+                Dukungan Anda akan membantu kami terus mengembangkan fitur-fitur terbaru dan menjaga layanan tetap gratis!
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <!-- Support Development -->
+                <div class="bg-white border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">🚀</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Pengembangan</h3>
+                    <p class="text-black font-bold text-sm">
+                        Bantu pengembangan fitur AI yang lebih canggih dan akurat
+                    </p>
+                </div>
+
+                <!-- Server Costs -->
+                <div class="bg-white border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Server & Hosting</h3>
+                    <p class="text-black font-bold text-sm">
+                        Menjaga server tetap online 24/7 untuk akses yang lancar
+                    </p>
+                </div>
+
+                <!-- Research -->
+                <div class="bg-white border-4 border-black neobrutalism-shadow-sm p-6 text-center">
+                    <div class="text-4xl mb-4">🔬</div>
+                    <h3 class="text-xl font-bold text-black mb-2">Riset & Data</h3>
+                    <p class="text-black font-bold text-sm">
+                        Pembelian dataset dan penelitian untuk meningkatkan akurasi
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-black border-4 border-white neobrutalism-shadow-sm p-6 max-w-2xl mx-auto mb-8">
+                <h3 class="text-2xl font-bold text-neon-green mb-4">🙏 Setiap Kontribusi Berarti</h3>
+                <p class="text-white font-bold mb-4">
+                    Mulai dari Rp 5.000 hingga berapapun yang Anda mampu. Semua donasi akan digunakan 100% untuk pengembangan platform dan tetap menjaga ChiliNet gratis untuk semua petani.
+                </p>
+               
+            </div>
+
+            <!-- Donation Button -->
+            <button 
+                id="donationBtn"
+                class="inline-block bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-black hover:bg-neon-yellow transition-colors transform hover:scale-105 cursor-pointer"
+            >
+                🎁 DONASI SEKARANG →
+            </button>
+            
+            <p class="text-black font-bold mt-4 text-sm">
+                Scan QR Code untuk donasi via QRIS • Aman & Mudah
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Donation Modal -->
+<div id="donationModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8 max-w-md mx-4 relative">
+        <!-- Close Button -->
+        <button 
+            id="closeModal" 
+            class="absolute top-4 right-4 bg-red-500 text-white w-8 h-8 rounded-full font-bold hover:bg-red-600 transition-colors"
+        >
+            ✕
+        </button>
+        
+        <div class="text-center">
+            <h3 class="text-2xl font-bold text-black mb-4">💝 Donasi via QRIS</h3>
+            <p class="text-black font-bold mb-6">
+                Scan QR Code di bawah dengan aplikasi perbankan atau e-wallet Anda
+            </p>
+            
+            <!-- QR Code Image -->
+            <div class="bg-[#faae2b] border-4 border-black neobrutalism-shadow-sm p-4 mb-6">
+                <img 
+                    src="{{ url_for('static', filename='assets/qris.jpeg') }}" 
+                    alt="QRIS ChiliNet Donation" 
+                    class="w-64 h-64 mx-auto bg-white p-4"
+                >
+            </div>
+            
+            <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4 mb-4">
+                <p class="text-black font-bold text-sm">
+                    🏦 Kompatibel dengan: GoPay, OVO, DANA, ShopeePay, BCA, Mandiri, BRI, BNI, dan semua bank/e-wallet yang mendukung QRIS
+                </p>
+            </div>
+            
+            <p class="text-black font-bold text-xs mb-4">
+                Sudah donasi? Hubungi kami untuk request fitur khusus atau prioritas pengembangan yang Anda inginkan
+            </p>
+            
+            <button 
+                id="whatsappBtn"
+                class="bg-green-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-green-600 transition-colors w-full"
+            >
+            💬 Request Fitur via WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<section class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-black mb-8 text-center">❓ Frequently Asked Questions</h2>
+        <p class="text-xl text-black font-bold text-center mb-12">
+            Pertanyaan yang sering diajukan tentang ChiliNet dan cara penggunaannya
+        </p>
+        
+        <!-- FAQ Container - akan diisi dengan JavaScript -->
+        <div id="faq-container" class="space-y-6">
+            <!-- FAQ items akan di-generate oleh JavaScript -->
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="mt-12 bg-black border-4 border-white neobrutalism-shadow-sm p-6 text-center">
+            <h3 class="text-2xl font-bold text-neon-green mb-4">🤔 Masih Ada Pertanyaan?</h3>
+            <p class="text-white font-bold mb-6">
+                Jangan ragu untuk menghubungi tim kami. Kami dengan senang hati akan membantu Anda!
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a 
+                    href="https://wa.me/6282258040148?text=Halo%20ChiliNet%20Team!%20Saya%20punya%20pertanyaan%20tentang%20aplikasi"
+                    class="bg-green-500 border-4 border-white neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-green-600 transition-colors inline-flex items-center justify-center gap-2"
+                    target="_blank"
+                >
+                    💬 Chat WhatsApp
+                </a>
+                <a 
+                    href="mailto:chilinet.support@gmail.com"
+                    class="bg-neon-blue border-4 border-white neobrutalism-shadow-sm px-6 py-3 text-black font-bold hover:bg-blue-400 transition-colors inline-flex items-center justify-center gap-2"
+                >
+                    📧 Email Support
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
 
     <!-- CTA Section -->
     <section class="max-w-7xl mx-auto px-4 py-16">
@@ -226,6 +589,7 @@
         </div>
     </footer>
 
+    <script src="{{ url_for('static', filename='js/faq-data.js') }}"></script>
     <script>
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -236,6 +600,123 @@
                 });
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    const donationBtn = document.getElementById('donationBtn');
+    const donationModal = document.getElementById('donationModal');
+    const closeModal = document.getElementById('closeModal');
+    const whatsappBtn = document.getElementById('whatsappBtn');
+    
+    // Open modal
+    donationBtn.addEventListener('click', function() {
+        donationModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    });
+    
+    // Close modal
+    closeModal.addEventListener('click', function() {
+        donationModal.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    });
+    
+    // Close modal when clicking outside
+    donationModal.addEventListener('click', function(e) {
+        if (e.target === donationModal) {
+            donationModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // WhatsApp button
+    whatsappBtn.addEventListener('click', function() {
+        const message = encodeURIComponent('Halo ChiliNet Team! Saya telah melakukan donasi dan ingin request fitur atau prioritas pengembangan. Berikut request saya:');
+        const whatsappUrl = `https://wa.me/6282258040148?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !donationModal.classList.contains('hidden')) {
+            donationModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const faqContainer = document.getElementById('faq-container');
+    
+    // Function to generate FAQ HTML
+    function generateFAQHTML(faqItem) {
+        return `
+            <div class="faq-item bg-${faqItem.color} border-4 border-black neobrutalism-shadow-sm">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-opacity-80 transition-colors">
+                    <span class="text-xl font-bold text-black">${faqItem.emoji} ${faqItem.question}</span>
+                    <span class="faq-arrow text-2xl font-bold text-black transform transition-transform">+</span>
+                </button>
+                <div class="faq-answer hidden p-6 pt-0">
+                    <p class="text-black font-bold">
+                        ${faqItem.answer}
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Generate FAQ items from data
+    if (typeof faqData !== 'undefined') {
+        const faqHTML = faqData.map(generateFAQHTML).join('');
+        faqContainer.innerHTML = faqHTML;
+        
+        // Initialize FAQ functionality after generating HTML
+        initializeFAQ();
+    } else {
+        console.error('FAQ data not loaded');
+        // Fallback content jika data tidak ter-load
+        faqContainer.innerHTML = `
+            <div class="bg-red-100 border-4 border-red-500 p-6 text-center">
+                <p class="text-red-700 font-bold">
+                    ⚠️ FAQ data tidak dapat dimuat. Silakan refresh halaman atau hubungi support.
+                </p>
+            </div>
+        `;
+    }
+    
+    // FAQ functionality
+    function initializeFAQ() {
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            const answer = item.querySelector('.faq-answer');
+            const arrow = item.querySelector('.faq-arrow');
+            
+            question.addEventListener('click', function() {
+                const isActive = item.classList.contains('active');
+                
+                // Close all other FAQ items
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('active');
+                        otherItem.querySelector('.faq-answer').classList.add('hidden');
+                        otherItem.querySelector('.faq-arrow').textContent = '+';
+                    }
+                });
+                
+                // Toggle current item
+                if (isActive) {
+                    item.classList.remove('active');
+                    answer.classList.add('hidden');
+                    arrow.textContent = '+';
+                } else {
+                    item.classList.add('active');
+                    answer.classList.remove('hidden');
+                    arrow.textContent = '−';
+                }
+            });
+        });
+    }
+});
     </script>
 </body>
 </html>

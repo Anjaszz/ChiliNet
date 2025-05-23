@@ -188,44 +188,83 @@ def get_disease_key(class_name):
     return None
 
 def extract_detected_diseases(predictions):
-    """Extract unique diseases from predictions dengan logging detail"""
-    logger.info("=== STARTING DISEASE EXTRACTION ===")
+    """Extract unique diseases from predictions dengan distribusi persentase"""
+    logger.info("=== STARTING DISEASE EXTRACTION WITH DISTRIBUTION ===")
     logger.info(f"Raw predictions: {predictions}")
     
-    detected_diseases = set()
-    disease_details = []
+    # Dictionary untuk menyimpan semua deteksi per penyakit
+    disease_detections = {}
+    total_confidence = 0
     
     predictions_list = predictions.get('predictions', [])
     logger.info(f"Number of predictions: {len(predictions_list)}")
     
+    # Kumpulkan semua deteksi dan confidence
     for i, prediction in enumerate(predictions_list):
         logger.info(f"--- Processing prediction {i+1} ---")
-        logger.info(f"Full prediction object: {prediction}")
         
         class_name = prediction.get('class', 'unknown')
         confidence = prediction.get('confidence', 0)
         
-        logger.info(f"Class name from prediction: '{class_name}'")
-        logger.info(f"Confidence: {confidence}")
+        logger.info(f"Class name: '{class_name}', Confidence: {confidence}")
         
         disease_key = get_disease_key(class_name)
-        logger.info(f"Mapped disease key: {disease_key}")
         
-        if disease_key and disease_key not in detected_diseases:
-            detected_diseases.add(disease_key)
-            disease_info = DISEASE_INFO[disease_key].copy()
-            disease_info['confidence'] = confidence
-            disease_info['original_class'] = class_name
-            disease_details.append(disease_info)
-            logger.info(f"Added disease: {disease_key} with confidence {confidence}")
-        elif disease_key:
-            logger.info(f"Disease {disease_key} already in detected set")
+        if disease_key:
+            if disease_key not in disease_detections:
+                disease_detections[disease_key] = []
+            
+            disease_detections[disease_key].append({
+                'confidence': confidence,
+                'original_class': class_name,
+                'bbox': {
+                    'x': prediction.get('x', 0),
+                    'y': prediction.get('y', 0),
+                    'width': prediction.get('width', 0),
+                    'height': prediction.get('height', 0)
+                }
+            })
+            total_confidence += confidence
+            logger.info(f"Added detection: {disease_key} with confidence {confidence}")
+    
+    # Hitung distribusi dan buat disease_details
+    disease_details = []
+    
+    for disease_key, detections in disease_detections.items():
+        # Hitung rata-rata confidence untuk penyakit ini
+        avg_confidence = sum(d['confidence'] for d in detections) / len(detections)
+        
+        # Hitung total confidence untuk penyakit ini (semua deteksi)
+        disease_total_confidence = sum(d['confidence'] for d in detections)
+        
+        # Hitung persentase distribusi
+        if total_confidence > 0:
+            distribution_percentage = (disease_total_confidence / total_confidence) * 100
         else:
-            logger.warning(f"Could not map class '{class_name}' to any disease")
+            distribution_percentage = 0
+        
+        # Buat info penyakit
+        disease_info = DISEASE_INFO[disease_key].copy()
+        disease_info.update({
+            'confidence': avg_confidence,
+            'distribution_percentage': distribution_percentage,
+            'detection_count': len(detections),
+            'total_confidence': disease_total_confidence,
+            'original_classes': list(set(d['original_class'] for d in detections)),
+            'all_detections': detections
+        })
+        
+        disease_details.append(disease_info)
+        logger.info(f"Disease {disease_key}: {len(detections)} detections, "
+                   f"avg confidence: {avg_confidence:.3f}, "
+                   f"distribution: {distribution_percentage:.1f}%")
+    
+    # Sort berdasarkan distribution percentage (tertinggi dulu)
+    disease_details.sort(key=lambda x: x['distribution_percentage'], reverse=True)
     
     logger.info(f"=== EXTRACTION COMPLETE ===")
-    logger.info(f"Total unique diseases detected: {len(disease_details)}")
-    logger.info(f"Disease keys: {[d['name'] for d in disease_details]}")
+    logger.info(f"Total unique diseases: {len(disease_details)}")
+  
     
     return disease_details
 
@@ -291,9 +330,9 @@ def process_image(image_path):
         x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
         confidence = prediction['confidence']
         class_name = prediction['class']
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (56, 33, 229), 2)
         text = f"{class_name}: {confidence:.2f}"
-        cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255) , 2)
     
     # Simpan hasil prediksi
     result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')

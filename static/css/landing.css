@@ -1,0 +1,95 @@
+.neobrutalism-shadow {
+    box-shadow: 6px 6px 0px #000;
+}
+.neobrutalism-shadow-sm {
+    box-shadow: 4px 4px 0px #000;
+}
+.neobrutalism-text-shadow {
+    text-shadow: 3px 3px 0px #000;
+}
+.faq-arrow {
+transition: transform 0.3s ease;
+}
+.faq-item.active .faq-arrow {
+transform: rotate(45deg);
+}
+.faq-answer {
+transition: all 0.3s ease;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(2deg); }
+    66% { transform: translateY(-5px) rotate(-2deg); }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
+}
+
+.project-card {
+    animation: slideInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.project-card:nth-child(1) { animation-delay: 0.1s; }
+.project-card:nth-child(2) { animation-delay: 0.2s; }
+.project-card:nth-child(3) { animation-delay: 0.3s; }
+.project-card:nth-child(4) { animation-delay: 0.4s; }
+.project-card:nth-child(5) { animation-delay: 0.5s; }
+.project-card:nth-child(6) { animation-delay: 0.6s; }
+
+.floating-element {
+    animation: float 3s ease-in-out infinite;
+}
+
+.project-card:hover .project-icon {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Additional hover effects */
+.project-card:hover {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+    .project-card,
+    .floating-element,
+    .project-icon {
+        animation: none;
+    }
+    
+    .project-card {
+        opacity: 1;
+    }
+}
+
+/* Custom pulse animation for CTAs */
+@keyframes customPulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.animate-custom-pulse {
+    animation: customPulse 2s ease-in-out infinite;
+}
+

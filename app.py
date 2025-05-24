@@ -283,6 +283,10 @@ def index():
 def stream_webcam():
     return render_template('webcam.html')
 
+@app.route('/reset')
+def reset_upload():
+    return redirect(url_for('index'))
+
 # Route untuk menangani upload gambar atau video
 @app.route('/upload', methods=['POST'])
 def upload_file():

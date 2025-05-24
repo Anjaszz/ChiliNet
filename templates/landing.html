@@ -7,44 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>ChiliNet - AI Chili Disease Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'neon-green': '#39ff14',
-                        'neon-pink': '#ff10f0',
-                        'neon-blue': '#00ffff',
-                        'neon-yellow': '#F28B82',
-                    },
-                    fontFamily: {
-                        'mono': ['JetBrains Mono', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        .neobrutalism-shadow {
-            box-shadow: 6px 6px 0px #000;
-        }
-        .neobrutalism-shadow-sm {
-            box-shadow: 4px 4px 0px #000;
-        }
-        .neobrutalism-text-shadow {
-            text-shadow: 3px 3px 0px #000;
-        }
-        .faq-arrow {
-    transition: transform 0.3s ease;
-}
-.faq-item.active .faq-arrow {
-    transform: rotate(45deg);
-}
-.faq-answer {
-    transition: all 0.3s ease;
-}
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
 </head>
 <body class="bg-neon-yellow font-mono">
     <!-- Navigation -->
@@ -89,28 +53,181 @@
         </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about" class="max-w-7xl mx-auto px-4 py-16">
-        <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
-            <h2 class="text-4xl font-bold text-black mb-8 text-center">Tentang ChiliNet</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">🌶️ Apa yang Kami Lakukan</h3>
-                    <p class="text-black font-bold">
-                        ChiliNet menggunakan teknologi AI mutakhir untuk mengidentifikasi penyakit pada tanaman cabai. Sistem kami mampu mendeteksi berbagai jenis penyakit dan hama yang umum menyerang tanaman cabai.
-                    </p>
-                </div>
-                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">🚀 Cara Kerjanya</h3>
-                    <p class="text-black font-bold">
-                        Cukup unggah gambar atau video tanaman cabai Anda, atau gunakan fitur kamera real-time kami. 
-                        Model AI kami akan menganalisis tanaman dan memberikan diagnosis instan beserta skor kepercayaannya.
-                    </p>
-                </div>
-                
+<!-- About Section -->
+<section id="about" class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-black mb-8 text-center">Tentang ChiliNet</h2>
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6">
+                <h3 class="text-2xl font-bold text-black mb-4">🌶️ Apa yang Kami Lakukan</h3>
+                <p class="text-black font-bold">
+                    ChiliNet menggunakan teknologi AI mutakhir untuk mengidentifikasi penyakit pada tanaman cabai. Sistem kami mampu mendeteksi berbagai jenis penyakit dan hama yang umum menyerang tanaman cabai dengan akurasi tinggi menggunakan deep learning dan computer vision.
+                </p>
+            </div>
+            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6">
+                <h3 class="text-2xl font-bold text-black mb-4">🚀 Cara Kerjanya</h3>
+                <p class="text-black font-bold">
+                    Cukup unggah gambar atau video tanaman cabai Anda, atau gunakan fitur kamera real-time kami. 
+                    Model AI kami akan menganalisis tanaman menggunakan algoritma YOLO v11 dan memberikan diagnosis instan beserta skor kepercayaannya.
+                </p>
             </div>
         </div>
-    </section>
+
+        <!-- Tech Stack Section -->
+        <div class="bg-black border-4 border-white neobrutalism-shadow p-8">
+            <h2 class="text-3xl font-bold text-neon-green mb-8 text-center">⚡ Technology Stack</h2>
+            <p class="text-white font-bold text-center mb-8">
+                Teknologi canggih yang mendukung sistem deteksi penyakit ChiliNet
+            </p>
+
+            <!-- AI & Machine Learning -->
+            <div class="mb-8">
+                <h3 class="text-xl font-bold text-neon-pink mb-4 flex items-center gap-2">
+                    🤖 AI & Machine Learning
+                </h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-bounce">🎯</div>
+                        <h4 class="text-lg font-bold text-black mb-2">YOLO v11</h4>
+                        <p class="text-black font-bold text-sm">
+                            State-of-the-art object detection untuk identifikasi penyakit real-time dengan akurasi tinggi
+                        </p>
+                    </div>
+                    <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-spin">🔬</div>
+                        <h4 class="text-lg font-bold text-black mb-2">OpenCV</h4>
+                        <p class="text-black font-bold text-sm">
+                            Computer vision library untuk preprocessing gambar, deteksi kontur, dan analisis visual
+                        </p>
+                    </div>
+                    <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-pulse">📊</div>
+                        <h4 class="text-lg font-bold text-black mb-2">NumPy</h4>
+                        <p class="text-black font-bold text-sm">
+                            Komputasi numerik untuk operasi array, manipulasi data, dan kalkulasi matematis
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backend Development -->
+            <div class="mb-8">
+                <h3 class="text-xl font-bold text-neon-blue mb-4 flex items-center gap-2">
+                    ⚙️ Backend Development
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-bounce">🐍</div>
+                        <h4 class="text-lg font-bold text-black mb-2">Python</h4>
+                        <p class="text-black font-bold text-sm">
+                            Core programming language untuk AI model, data processing, dan backend logic
+                        </p>
+                    </div>
+                    <div class="bg-white border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-pulse">🌶️</div>
+                        <h4 class="text-lg font-bold text-black mb-2">Flask</h4>
+                        <p class="text-black font-bold text-sm">
+                            Lightweight web framework untuk REST API, routing, dan server-side processing
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frontend Development -->
+            <div class="mb-8">
+                <h3 class="text-xl font-bold text-neon-yellow mb-4 flex items-center gap-2">
+                    🎨 Frontend Development
+                </h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-orange-400 border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-bounce">🌐</div>
+                        <h4 class="text-lg font-bold text-black mb-2">HTML5</h4>
+                        <p class="text-black font-bold text-sm">
+                            Struktur semantic website dengan support untuk multimedia dan modern web features
+                        </p>
+                    </div>
+                    <div class="bg-blue-400 border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-spin">🎨</div>
+                        <h4 class="text-lg font-bold text-black mb-2">Tailwind CSS</h4>
+                        <p class="text-black font-bold text-sm">
+                            Utility-first CSS framework untuk rapid UI development dan responsive design
+                        </p>
+                    </div>
+                    <div class="bg-yellow-400 border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-pulse">⚡</div>
+                        <h4 class="text-lg font-bold text-black mb-2">JavaScript</h4>
+                        <p class="text-black font-bold text-sm">
+                            Interactive functionality, DOM manipulation, dan real-time user experience
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data & Tools -->
+            <div class="mb-8">
+                <h3 class="text-xl font-bold text-neon-green mb-4 flex items-center gap-2">
+                    🛠️ Data & Development Tools
+                </h3>
+                <div class="grid md:grid-cols-1 gap-4">
+                    <div class="bg-purple-400 border-4 border-black neobrutalism-shadow-sm p-4 text-center group hover:scale-105 transition-transform duration-300">
+                        <div class="text-3xl mb-2 group-hover:animate-bounce">🤖</div>
+                        <h4 class="text-lg font-bold text-black mb-2">Roboflow</h4>
+                        <p class="text-black font-bold text-sm">
+                            Platform untuk dataset management, annotation, augmentation, dan model deployment dalam computer vision
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Overview -->
+            <div class="bg-gradient-to-r from-neon-pink via-neon-blue to-neon-green border-4 border-white neobrutalism-shadow-sm p-6">
+                <h3 class="text-2xl font-bold text-white text-center mb-6 neobrutalism-text-shadow">🏗️ Arsitektur Sistem</h3>
+                <div class="grid md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-white bg-opacity-90 p-4 rounded border-2 border-black">
+                        <div class="text-2xl mb-2">📸</div>
+                        <h4 class="font-bold text-black mb-1">Input Layer</h4>
+                        <p class="text-xs text-black font-bold">HTML5 + JS Camera/Upload</p>
+                    </div>
+                    <div class="bg-white bg-opacity-90 p-4 rounded border-2 border-black">
+                        <div class="text-2xl mb-2">🔄</div>
+                        <h4 class="font-bold text-black mb-1">Processing</h4>
+                        <p class="text-xs text-black font-bold">OpenCV + NumPy Preprocessing</p>
+                    </div>
+                    <div class="bg-white bg-opacity-90 p-4 rounded border-2 border-black">
+                        <div class="text-2xl mb-2">🧠</div>
+                        <h4 class="font-bold text-black mb-1">AI Detection</h4>
+                        <p class="text-xs text-black font-bold">YOLO v11 + Python Backend</p>
+                    </div>
+                    <div class="bg-white bg-opacity-90 p-4 rounded border-2 border-black">
+                        <div class="text-2xl mb-2">📱</div>
+                        <h4 class="font-bold text-black mb-1">Output UI</h4>
+                        <p class="text-xs text-black font-bold">Flask + Tailwind Interface</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Stats -->
+            <div class="mt-8 grid md:grid-cols-4 gap-4">
+                <div class="bg-neon-green border-4 border-black text-center p-4 group hover:scale-110 transition-transform duration-300">
+                    <div class="text-3xl font-bold text-black group-hover:animate-pulse">70%</div>
+                    <p class="text-black font-bold text-sm">Detection Accuracy</p>
+                </div>
+                <div class="bg-neon-blue border-4 border-black text-center p-4 group hover:scale-110 transition-transform duration-300">
+                    <div class="text-3xl font-bold text-black group-hover:animate-pulse">&lt;6s</div>
+                    <p class="text-black font-bold text-sm">Processing Time</p>
+                </div>
+                <div class="bg-neon-pink border-4 border-black text-center p-4 group hover:scale-110 transition-transform duration-300">
+                    <div class="text-3xl font-bold text-black group-hover:animate-pulse">4</div>
+                    <p class="text-black font-bold text-sm">Disease Types</p>
+                </div>
+                <div class="bg-neon-yellow border-4 border-black text-center p-4 group hover:scale-110 transition-transform duration-300">
+                    <div class="text-3xl font-bold text-black group-hover:animate-pulse">24/7</div>
+                    <p class="text-black font-bold text-sm">Availability</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
     <!-- Diseases Section -->
     <section id="diseases" class="max-w-7xl mx-auto px-4 py-16">
@@ -285,6 +402,7 @@
         </div>
     </div>        
 </section>
+
 <!-- Coming Soon Section -->
 <section class="max-w-7xl mx-auto px-4 py-16">
     <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
@@ -571,6 +689,159 @@
         </div>
     </section>
     
+    <!-- Other Projects Section -->
+<section class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-neon-green mb-8 text-center animate-pulse">🚀 Project Lainnya</h2>
+        <p class="text-xl text-white font-bold text-center mb-12">
+            Jelajahi proyek-proyek teknologi lainnya yang telah kami kembangkan
+        </p>
+        
+        <!-- Projects Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Project 1 - AI Chatbot -->
+            <div class="project-card bg-white border-4 border-neon-blue neobrutalism-shadow-sm p-6 transform transition-all duration-300 hover:scale-105 hover:rotate-1 hover:shadow-2xl group">
+                <div class="relative overflow-hidden mb-4">
+                    <div class="project-icon text-6xl text-center py-6 bg-gradient-to-br from-neon-blue to-blue-600 text-white transform transition-transform duration-500 group-hover:scale-110">
+                        <img src="{{ url_for('static', filename='assets/Kaskita.jpg') }}" alt="Team Member 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <h3 class="text-2xl font-bold text-black mb-3 group-hover:text-neon-blue transition-colors">KasKita</h3>
+                <p class="text-black font-bold mb-4 text-sm">
+                    Kas Kita adalah aplikasi sederhana untuk mencatat dan mengelola uang kas, lengkap dengan fitur tambah/edit data, selisih otomatis, serta login dan ganti password.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="bg-neon-pink text-black px-2 py-1 text-xs font-bold border-2 border-black">Dart</span>
+                    <span class="bg-neon-green text-black px-2 py-1 text-xs font-bold border-2 border-black">Flutter</span>
+                    <span class="bg-neon-yellow text-black px-2 py-1 text-xs font-bold border-2 border-black">SQF Lite</span>
+                </div>
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-neon-blue border-2 border-black px-4 py-2 text-black font-bold hover:bg-blue-400 transition-colors transform hover:scale-95">
+                        Demo →
+                    </button>
+                    <button class="bg-black border-2 border-black px-4 py-2 text-neon-blue font-bold hover:bg-gray-800 transition-colors">
+                        GitHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Project 2 - Weather Prediction -->
+            <div class="project-card bg-white border-4 border-neon-green neobrutalism-shadow-sm p-6 transform transition-all duration-300 hover:scale-105 hover:-rotate-1 hover:shadow-2xl group" style="animation-delay: 0.2s;">
+                <div class="relative overflow-hidden mb-4">
+                    <div class="project-icon text-6xl text-center py-6 bg-gradient-to-br from-neon-green to-green-600 text-white transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                        <img src="{{ url_for('static', filename='assets/potato.jpg') }}" alt="Team Member 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-neon-green opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <h3 class="text-2xl font-bold text-black mb-3 group-hover:text-neon-green transition-colors">Potato Crispy</h3>
+                <p class="text-black font-bold mb-4 text-sm">
+                 POTATO CRISPY adalah usaha yang bergerak dibidang kuliner dan cemilan yang pembuatan dan bahan bakunya cukup simple. Perusahaan kami menyajikan cemilan enak seperti French Frice dan Fresh Nugget dengan
+                    campuran bumbu saus dan mayonice.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="bg-neon-blue text-black px-2 py-1 text-xs font-bold border-2 border-black">HTML</span>
+                    <span class="bg-neon-pink text-black px-2 py-1 text-xs font-bold border-2 border-black">CSS</span>
+                </div>
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-neon-green border-2 border-black px-4 py-2 text-black font-bold hover:bg-green-400 transition-colors transform hover:scale-95">
+                        Demo →
+                    </button>
+                    <button class="bg-black border-2 border-black px-4 py-2 text-neon-green font-bold hover:bg-gray-800 transition-colors">
+                        GitHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Project 3 - IoT Dashboard -->
+            <div class="project-card bg-white border-4 border-neon-pink neobrutalism-shadow-sm p-6 transform transition-all duration-300 hover:scale-105 hover:rotate-1 hover:shadow-2xl group" style="animation-delay: 0.4s;">
+                <div class="relative overflow-hidden mb-4">
+                    <div class="project-icon text-6xl text-center py-6 bg-gradient-to-br from-neon-pink to-pink-600 text-white transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6">
+                        <img src="{{ url_for('static', filename='assets/flazz-market.png') }}" alt="Team Member 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-neon-pink opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <h3 class="text-2xl font-bold text-black mb-3 group-hover:text-neon-pink transition-colors">Flazz Market</h3>
+                <p class="text-black font-bold mb-4 text-sm">
+                    Aplikasi Sistem manajemen supermarket adalah sebuah sistem kasir POS (Point of Sales) dan manajemen produk supermarket.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="bg-neon-blue text-black px-2 py-1 text-xs font-bold border-2 border-black">JAVA</span>
+                </div>
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-neon-pink border-2 border-black px-4 py-2 text-black font-bold hover:bg-pink-400 transition-colors transform hover:scale-95">
+                        Demo →
+                    </button>
+                    <button class="bg-black border-2 border-black px-4 py-2 text-neon-pink font-bold hover:bg-gray-800 transition-colors">
+                        GitHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Project 4 - Marketplace -->
+            <div class="project-card bg-white border-4 border-orange-600 neobrutalism-shadow-sm p-6 transform transition-all duration-300 hover:scale-105 hover:-rotate-1 hover:shadow-2xl group" style="animation-delay: 1s;">
+                <div class="relative overflow-hidden mb-4">
+                    <div class="project-icon text-6xl text-center py-6 bg-gradient-to-br from-orange-500 to-orange-700 text-white transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
+                        <img src="{{ url_for('static', filename='assets/SIMAS.png') }}" alt="Team Member 2" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-orange-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <h3 class="text-2xl font-bold text-black mb-3 group-hover:text-orange-600 transition-colors">SIMAS (Sistem Manajemen Seeminar)</h3>
+                <p class="text-black font-bold mb-4 text-sm">
+                    Platform modern untuk mengelola seminar, mulai dari registrasi hingga laporan akhir, semuanya dalam satu tempat.
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="bg-neon-blue text-black px-2 py-1 text-xs font-bold border-2 border-black">PHP</span>
+                    <span class="bg-neon-green text-black px-2 py-1 text-xs font-bold border-2 border-black">CodeIgniter 3</span>
+                    <span class="bg-neon-pink text-black px-2 py-1 text-xs font-bold border-2 border-black">MySQL</span>
+                </div>
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-orange-500 border-2 border-black px-4 py-2 text-white font-bold hover:bg-orange-400 transition-colors transform hover:scale-95">
+                        Demo →
+                    </button>
+                    <button class="bg-black border-2 border-black px-4 py-2 text-orange-500 font-bold hover:bg-gray-800 transition-colors">
+                        GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Animation Elements -->
+        <div class="relative mt-12 overflow-hidden">
+            <div class="floating-element absolute top-0 left-1/4 text-neon-green text-2xl animate-bounce" style="animation-delay: 0s;">🚀</div>
+            <div class="floating-element absolute top-8 right-1/4 text-neon-pink text-2xl animate-pulse" style="animation-delay: 1s;">💡</div>
+            <div class="floating-element absolute top-4 left-3/4 text-neon-blue text-2xl animate-bounce" style="animation-delay: 2s;">⚡</div>
+            <div class="floating-element absolute top-12 left-1/2 text-neon-yellow text-2xl animate-pulse" style="animation-delay: 3s;">🔥</div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="mt-16 bg-gradient-to-r from-neon-pink via-neon-blue to-neon-green border-4 border-white neobrutalism-shadow-sm p-8 text-center transform hover:scale-105 transition-transform duration-300">
+            <h3 class="text-3xl font-bold text-white neobrutalism-text-shadow mb-4 animate-pulse">🤝 Mari Berkolaborasi!</h3>
+            <p class="text-black font-bold mb-6 text-lg">
+                Punya ide proyek menarik? Atau ingin berkontribusi pada proyek open-source kami? 
+                Kami selalu terbuka untuk kolaborasi dan pembelajaran bersama!
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a 
+                    href="https://github.com/Anjaszz" 
+                    target="_blank"
+                    class="bg-black border-4 border-white neobrutalism-shadow-sm px-8 py-4 text-neon-green font-bold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                >
+                    <span class="animate-spin">⚙️</span> Explore GitHub
+                </a>
+                <a 
+                    href="https://wa.me/6282258040148?text=Halo!%20Saya%20tertarik%20untuk%20berkolaborasi%20dalam%20proyek%20teknologi"
+                    target="_blank"
+                    class="bg-white border-4 border-black neobrutalism-shadow-sm px-8 py-4 text-black font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                >
+                    <span class="animate-pulse">💬</span> Mari Diskusi
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
 
     <!-- Footer -->
     <footer id="contact" class="bg-blue-500 border-t-4 border-black mt-16">
@@ -590,133 +861,6 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/faq-data.js') }}"></script>
-    <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-    const donationBtn = document.getElementById('donationBtn');
-    const donationModal = document.getElementById('donationModal');
-    const closeModal = document.getElementById('closeModal');
-    const whatsappBtn = document.getElementById('whatsappBtn');
-    
-    // Open modal
-    donationBtn.addEventListener('click', function() {
-        donationModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent scrolling
-    });
-    
-    // Close modal
-    closeModal.addEventListener('click', function() {
-        donationModal.classList.add('hidden');
-        document.body.style.overflow = 'auto'; // Restore scrolling
-    });
-    
-    // Close modal when clicking outside
-    donationModal.addEventListener('click', function(e) {
-        if (e.target === donationModal) {
-            donationModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-    });
-    
-    // WhatsApp button
-    whatsappBtn.addEventListener('click', function() {
-        const message = encodeURIComponent('Halo ChiliNet Team! Saya telah melakukan donasi dan ingin request fitur atau prioritas pengembangan. Berikut request saya:');
-        const whatsappUrl = `https://wa.me/6282258040148?text=${message}`;
-        window.open(whatsappUrl, '_blank');
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !donationModal.classList.contains('hidden')) {
-            donationModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const faqContainer = document.getElementById('faq-container');
-    
-    // Function to generate FAQ HTML
-    function generateFAQHTML(faqItem) {
-        return `
-            <div class="faq-item bg-${faqItem.color} border-4 border-black neobrutalism-shadow-sm">
-                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-opacity-80 transition-colors">
-                    <span class="text-xl font-bold text-black">${faqItem.emoji} ${faqItem.question}</span>
-                    <span class="faq-arrow text-2xl font-bold text-black transform transition-transform">+</span>
-                </button>
-                <div class="faq-answer hidden p-6 pt-0">
-                    <p class="text-black font-bold">
-                        ${faqItem.answer}
-                    </p>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Generate FAQ items from data
-    if (typeof faqData !== 'undefined') {
-        const faqHTML = faqData.map(generateFAQHTML).join('');
-        faqContainer.innerHTML = faqHTML;
-        
-        // Initialize FAQ functionality after generating HTML
-        initializeFAQ();
-    } else {
-        console.error('FAQ data not loaded');
-        // Fallback content jika data tidak ter-load
-        faqContainer.innerHTML = `
-            <div class="bg-red-100 border-4 border-red-500 p-6 text-center">
-                <p class="text-red-700 font-bold">
-                    ⚠️ FAQ data tidak dapat dimuat. Silakan refresh halaman atau hubungi support.
-                </p>
-            </div>
-        `;
-    }
-    
-    // FAQ functionality
-    function initializeFAQ() {
-        const faqItems = document.querySelectorAll('.faq-item');
-        
-        faqItems.forEach(item => {
-            const question = item.querySelector('.faq-question');
-            const answer = item.querySelector('.faq-answer');
-            const arrow = item.querySelector('.faq-arrow');
-            
-            question.addEventListener('click', function() {
-                const isActive = item.classList.contains('active');
-                
-                // Close all other FAQ items
-                faqItems.forEach(otherItem => {
-                    if (otherItem !== item) {
-                        otherItem.classList.remove('active');
-                        otherItem.querySelector('.faq-answer').classList.add('hidden');
-                        otherItem.querySelector('.faq-arrow').textContent = '+';
-                    }
-                });
-                
-                // Toggle current item
-                if (isActive) {
-                    item.classList.remove('active');
-                    answer.classList.add('hidden');
-                    arrow.textContent = '+';
-                } else {
-                    item.classList.add('active');
-                    answer.classList.remove('hidden');
-                    arrow.textContent = '−';
-                }
-            });
-        });
-    }
-});
-    </script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
 </body>
 </html>

@@ -5,101 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChiliNet - Disease Detection</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/chilinet-no-text.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'neon-green': '#39ff14',
-                        'neon-pink': '#ff10f0',
-                        'neon-blue': '#00ffff',
-                        'neon-yellow': '#ffff00',
-                    },
-                    fontFamily: {
-                        'mono': ['JetBrains Mono', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        .neobrutalism-shadow {
-            box-shadow: 6px 6px 0px #000;
-        }
-        .neobrutalism-shadow-sm {
-            box-shadow: 4px 4px 0px #000;
-        }
-        .neobrutalism-text-shadow {
-            text-shadow: 3px 3px 0px #000;
-        }
-        .file-input::-webkit-file-upload-button {
-            background: #39ff14;
-            border: 3px solid #000;
-            color: #000;
-            font-weight: bold;
-            padding: 8px 16px;
-            margin-right: 16px;
-            box-shadow: 3px 3px 0px #000;
-        }
-        .file-input::-webkit-file-upload-button:hover {
-            background: #ff10f0;
-        }
-        .treatment-item {
-            background: linear-gradient(135deg, #39ff14, #00ffff);
-            margin-bottom: 8px;
-            padding: 12px;
-            border: 3px solid #000;
-            box-shadow: 3px 3px 0px #000;
-            transition: transform 0.2s;
-        }
-        .treatment-item:hover {
-            transform: translateX(5px);
-        }
-        .prevention-item {
-            background: linear-gradient(135deg, #ff10f0, #ffff00);
-            margin-bottom: 6px;
-            padding: 8px;
-            border: 2px solid #000;
-            box-shadow: 2px 2px 0px #000;
-        }
-        .distribution-bar {
-            transition: width 0.5s ease-in-out;
-        }
-        
-        /* Loading animations */
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .bounce-animation {
-            animation: bounce 1s infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
-        }
-        
-        /* Overlay for loading */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            display: none;
-        }
-    </style>
+
 </head>
 <body class="bg-[#faae2b] font-mono min-h-screen">
     <!-- Loading Overlay -->
@@ -236,10 +145,17 @@
         <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
             <h3 class="text-3xl font-bold text-black mb-6 text-center">🎯 Hasil Deteksi</h3>
             
-            <div class="flex justify-center mb-8">
-                <div class="border-4 border-black neobrutalism-shadow-sm">
+            <div class="flex justify-center mb-2">
+                <div class="border-4 border-black neobrutalism-shadow-sm ">
                     <img src="{{ result_image }}" alt="Hasil Analisis" class="max-w-full h-auto">
                 </div>
+              
+            </div>
+            <div class="text-center my-6">
+                <button onclick="resetPage()" 
+                        class="inline-block bg-red-500 border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-white hover:bg-red-600 transition-all">
+                    🔄 RESET & UPLOAD BARU
+                </button>
             </div>
 
             <!-- Disease Distribution Summary (if multiple diseases) -->
@@ -491,247 +407,21 @@
         </div>
     </div>
 
-    <script>
-      // Enhanced form submission with loading - FIXED VERSION
-function validateForm(event) {
-    var fileInput = document.getElementById('file');
-    var inputType = document.getElementById('input_type').value;
-    
-    // Skip validation for webcam mode
-    if (inputType === 'webcam') {
-        return true;
-    }
-    
-    // Check if file is selected
-    if (!fileInput.files || fileInput.files.length === 0) {
-        event.preventDefault(); // Prevent form submission
-        showModal();
-        return false;
-    }
-    
-    // Show loading overlay AFTER validation passes
-    // Don't prevent the form submission - let it proceed normally
-    showLoadingOverlay(inputType);
-    return true; // Allow form to submit
-}
 
-function showLoadingOverlay(inputType) {
-    const overlay = document.getElementById('loadingOverlay');
-    const message = document.getElementById('loadingMessage');
-    const progressBar = document.getElementById('progressBar');
-    
-    // Set appropriate message
-    if (inputType === 'image') {
-        message.textContent = 'Sedang menganalisis gambar dengan AI...';
-    } else if (inputType === 'video') {
-        message.textContent = 'Sedang memproses video frame demi frame...';
-    }
-    
-    // Show overlay
-    overlay.style.display = 'flex';
-    
-    // Animate progress bar
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 10 + 5; // Faster progress
-        if (progress > 95) progress = 95; // Don't reach 100% until actually done
-        progressBar.style.width = progress + '%';
-    }, 300);
-    
-    // Store interval to clear it later if needed
-    window.loadingInterval = interval;
-}
 
-function showModal() {
-    document.getElementById('warningModal').classList.remove('hidden');
-}
+<div id="toastContainer" class="toast">
+    <div class="toast-content">
+        <button class="toast-close" onclick="hideToast()">&times;</button>
+        <div class="flex items-center">
+            <span id="toastIcon" class="toast-icon">✅</span>
+            <div class="flex-1">
+                <div id="toastTitle" class="text-black font-bold text-lg mb-1">Reset Berhasil!</div>
+                <div id="toastMessage" class="text-black font-bold text-sm">Halaman telah direset. Silakan upload file baru untuk analisis.</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-function closeModal() {
-    document.getElementById('warningModal').classList.add('hidden');
-    document.getElementById('warningModal').classList.remove('animate-pulse');
-}
-
-// Close modal when clicking outside
-document.getElementById('warningModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
-});
-
-// Add event listener to form - MODIFIED
-document.querySelector('form').addEventListener('submit', validateForm);
-
-// File input preview with enhanced visual feedback
-document.getElementById('file').addEventListener('change', function(e) {
-    const fileName = e.target.files[0]?.name;
-    const fileSize = e.target.files[0]?.size;
-    const fileInput = this;
-    
-    if (fileName) {
-        // Add visual feedback when file is selected
-        fileInput.classList.remove('border-black');
-        fileInput.classList.add('border-neon-green');
-        
-        // Show file name and size
-        let fileNameDisplay = document.getElementById('fileName');
-        if (!fileNameDisplay) {
-            fileNameDisplay = document.createElement('p');
-            fileNameDisplay.id = 'fileName';
-            fileNameDisplay.className = 'text-black font-bold mt-2 text-center';
-            fileInput.parentNode.appendChild(fileNameDisplay);
-        }
-        
-        // Format file size
-        const formatFileSize = (bytes) => {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        };
-        
-        fileNameDisplay.innerHTML = `
-            <span class="inline-block bg-neon-green border-2 border-black p-2 text-sm">
-                ✅ File Dipilih: <strong>${fileName}</strong><br>
-                📊 Ukuran: ${formatFileSize(fileSize)}
-            </span>
-        `;
-        fileNameDisplay.classList.remove('hidden');
-        
-        // Update submit button
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.classList.remove('bg-neon-green');
-        submitBtn.classList.add('bg-neon-pink');
-        submitBtn.innerHTML = '🚀 ANALISIS FILE TERPILIH';
-        
-    } else {
-        // Reset visual feedback
-        fileInput.classList.remove('border-neon-green');
-        fileInput.classList.add('border-black');
-        
-        const fileNameDisplay = document.getElementById('fileName');
-        if (fileNameDisplay) {
-            fileNameDisplay.classList.add('hidden');
-        }
-        
-        // Reset submit button
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.classList.remove('bg-neon-pink');
-        submitBtn.classList.add('bg-neon-green');
-        submitBtn.innerHTML = '🚀 MULAI ANALISIS';
-    }
-});
-
-// Add visual feedback for different input types
-document.getElementById('input_type').addEventListener('change', function() {
-    const inputType = this.value;
-    const fileInputContainer = document.getElementById('file').parentNode;
-    const submitBtn = document.getElementById('submitBtn');
-    
-    if (inputType === 'webcam') {
-        fileInputContainer.style.opacity = '0.5';
-        document.getElementById('file').disabled = true;
-        submitBtn.innerHTML = '📹 BERALIH KE WEBCAM';
-    } else {
-        fileInputContainer.style.opacity = '1';
-        document.getElementById('file').disabled = false;
-        
-        // Update button text based on type
-        if (inputType === 'image') {
-            submitBtn.innerHTML = '📸 ANALISIS GAMBAR';
-        } else if (inputType === 'video') {
-            submitBtn.innerHTML = '🎥 PROSES VIDEO';
-        }
-    }
-});
-
-// Enhanced file validation
-document.getElementById('file').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    const inputType = document.getElementById('input_type').value;
-    
-    if (file) {
-        const fileType = file.type;
-        const fileSize = file.size;
-        const maxSize = 100 * 1024 * 1024; // 100MB limit
-        
-        // Validate file type
-        if (inputType === 'image' && !fileType.startsWith('image/')) {
-            alert('⚠️ Silakan pilih file gambar untuk mode Analisis Gambar!');
-            this.value = '';
-            return;
-        }
-        
-        if (inputType === 'video' && !fileType.startsWith('video/')) {
-            alert('⚠️ Silakan pilih file video untuk mode Pemrosesan Video!');
-            this.value = '';
-            return;
-        }
-        
-        // Validate file size
-        if (fileSize > maxSize) {
-            alert('⚠️ Ukuran file terlalu besar! Maksimal 100MB.');
-            this.value = '';
-            return;
-        }
-        
-        // Show success feedback
-        const fileName = document.getElementById('fileName');
-        if (fileName) {
-            fileName.classList.add('pulse-animation');
-            setTimeout(() => {
-                fileName.classList.remove('pulse-animation');
-            }, 2000);
-        }
-    }
-});
-
-// REMOVED: The problematic event listener that was blocking form submission
-// This was the main cause of the issue:
-// document.getElementById('uploadForm').addEventListener('submit', function(e) {
-//     const overlay = document.getElementById('loadingOverlay');
-//     if (overlay.style.display === 'flex') {
-//         e.preventDefault();
-//         return false;
-//     }
-// });
-
-// Auto-hide loading on page load (if coming back from server)
-window.addEventListener('load', function() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.style.display = 'none';
-    }
-    
-    // Clear any existing interval
-    if (window.loadingInterval) {
-        clearInterval(window.loadingInterval);
-    }
-});
-
-// Handle browser back button
-window.addEventListener('pageshow', function(event) {
-    if (event.persisted) {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
-        
-        if (window.loadingInterval) {
-            clearInterval(window.loadingInterval);
-        }
-    }
-});
-
-// Add function to redirect to webcam
-function redirectToWebcam() {
-    var inputType = document.getElementById("input_type").value;
-    var webcamLink = document.getElementById("webcamLink");
-
-    if (inputType === "webcam") {
-        window.location.href = webcamLink.href;
-    }
-}
-    </script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

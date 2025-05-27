@@ -233,6 +233,9 @@ def extract_detected_diseases(predictions):
     for disease_key, detections in disease_detections.items():
         # Hitung rata-rata confidence untuk penyakit ini
         avg_confidence = sum(d['confidence'] for d in detections) / len(detections)
+
+        # Hitung max confidence untuk penyakit ini
+        max_confidence = max(d['confidence'] for d in detections)
         
         # Hitung total confidence untuk penyakit ini (semua deteksi)
         disease_total_confidence = sum(d['confidence'] for d in detections)
@@ -246,7 +249,9 @@ def extract_detected_diseases(predictions):
         # Buat info penyakit
         disease_info = DISEASE_INFO[disease_key].copy()
         disease_info.update({
-            'confidence': avg_confidence,
+            'confidence': avg_confidence,      # Tetap average untuk internal
+            'max_confidence': max_confidence,  # Tambah max confidence
+            'avg_confidence': avg_confidence,  # Explicit average
             'distribution_percentage': distribution_percentage,
             'detection_count': len(detections),
             'total_confidence': disease_total_confidence,

@@ -21,8 +21,8 @@ app = Flask(__name__)
 
 # Inisialisasi Roboflow
 rf = Roboflow(api_key=ROBOFLOW_API_KEY)
-project = rf.workspace("data-cabai").project("penyakit-cabai-xdnmk")
-model = project.version(2).model
+project = rf.workspace("data-cabai").project("penyakit-cabai-klsjq")
+model = project.version(14).model
 
 # Direktori upload
 UPLOAD_FOLDER = 'static/uploads/'
@@ -334,14 +334,33 @@ def process_image(image_path):
     detected_diseases = extract_detected_diseases(predictions)
     logger.info(f"Final detected diseases: {len(detected_diseases)} diseases")
 
-    # Gambar bounding boxes
+    # Gambar bounding boxes dengan koordinat yang benar
     for prediction in predictions.get('predictions', []):
-        x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+        # Roboflow format: x,y adalah center point
+        center_x = int(prediction['x'])
+        center_y = int(prediction['y'])
+        width = int(prediction['width'])
+        height = int(prediction['height'])
+        
+        # Convert ke top-left corner coordinates
+        x1 = center_x - width // 2
+        y1 = center_y - height // 2
+        x2 = center_x + width // 2
+        y2 = center_y + height // 2
+        
+        # Pastikan koordinat tidak negatif dan dalam batas gambar
+        x1 = max(0, x1)
+        y1 = max(0, y1)
+        x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
+        y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
+        
         confidence = prediction['confidence']
         class_name = prediction['class']
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (56, 33, 229), 2)
+        
+        # Gambar rectangle dengan koordinat yang benar
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (56, 33, 229), 2)
         text = f"{class_name}: {confidence:.2f}"
-        cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255) , 2)
+        cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
     
     # Simpan hasil prediksi
     result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')
@@ -353,6 +372,7 @@ def process_image(image_path):
                          has_detections=len(detected_diseases) > 0)
 
 # Fungsi untuk memproses video
+# Fungsi untuk memproses video
 def process_video(video_path):
     logger.info(f"Processing video: {video_path}")
     
@@ -361,20 +381,40 @@ def process_video(video_path):
     all_predictions = []
     
     while True:
-        ret, frame = cap.read()
+        ret, frame = cap.read()  
         if not ret:
             break
         
         predictions = model.predict(frame, confidence=12, overlap=40).json()
         all_predictions.extend(predictions.get('predictions', []))
 
+        # Gambar bounding boxes dengan koordinat yang benar
         for prediction in predictions.get('predictions', []):
-            x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+            # Roboflow format: x,y adalah center point
+            center_x = int(prediction['x'])
+            center_y = int(prediction['y'])
+            width = int(prediction['width'])
+            height = int(prediction['height'])
+            
+            # Convert ke top-left corner coordinates
+            x1 = center_x - width // 2
+            y1 = center_y - height // 2
+            x2 = center_x + width // 2
+            y2 = center_y + height // 2
+            
+            # Pastikan koordinat tidak negatif dan dalam batas gambar
+            x1 = max(0, x1)
+            y1 = max(0, y1)
+            x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
+            y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
+            
             confidence = prediction['confidence']
             class_name = prediction['class']
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            
+            # Gambar rectangle dengan koordinat yang benar
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
             text = f"{class_name}: {confidence:.2f}"
-            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         
         frames.append(frame)
 
@@ -403,6 +443,7 @@ def process_video(video_path):
                          has_detections=len(detected_diseases) > 0)
 
 # Fungsi untuk menangkap gambar dari webcam
+# Fungsi untuk menangkap gambar dari webcam
 @app.route('/capture_webcam', methods=['POST'])
 def capture_webcam():
     try:
@@ -425,14 +466,33 @@ def capture_webcam():
             # Extract detected diseases
             detected_diseases = extract_detected_diseases(predictions)
 
-            # Gambar hasil prediksi
+            # Gambar hasil prediksi dengan koordinat yang benar
             for prediction in predictions.get('predictions', []):
-                x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+                # Roboflow format: x,y adalah center point
+                center_x = int(prediction['x'])
+                center_y = int(prediction['y'])
+                width = int(prediction['width'])
+                height = int(prediction['height'])
+                
+                # Convert ke top-left corner coordinates
+                x1 = center_x - width // 2
+                y1 = center_y - height // 2
+                x2 = center_x + width // 2
+                y2 = center_y + height // 2
+                
+                # Pastikan koordinat tidak negatif dan dalam batas gambar
+                x1 = max(0, x1)
+                y1 = max(0, y1)
+                x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
+                y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
+                
                 confidence = prediction['confidence']
                 class_name = prediction['class']
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                
+                # Gambar rectangle dengan koordinat yang benar
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
                 text = f"{class_name}: {confidence:.2f}"
-                cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
             # Simpan hasil prediksi
             result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image_from_webcam.jpg')

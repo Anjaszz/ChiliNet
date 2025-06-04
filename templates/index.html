@@ -58,6 +58,48 @@
             <p class="text-xl text-black font-bold">Unggah gambar atau video tanaman cabai Anda untuk analisis oleh AI</p>
         </div>
 
+                <!-- Disease Database (Static - Always Visible) -->
+                <div class="bg-white border-4 border-black neobrutalism-shadow sm:p-8 p-6 my-8">
+                    <h3 class="sm:text-3xl text-xl font-bold text-black mb-6 text-center">🦠 Penyakit yang Dapat Dideteksi</h3>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-2 sm:p-4">
+                            <h4 class="font-bold text-black mb-2 text-center">🔴 Leaf Spot</h4>
+                            <p class="text-black font-bold text-sm text-center">Penyakit jamur dengan bercak coklat/hitam yang mengurangi fotosintesis dan hasil panen.</p>
+                        </div>
+                        <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-2 sm:p-4">
+                            <h4 class="font-bold text-black mb-2 text-center">🌀 Leaf Curl</h4>
+                            <p class="text-black font-bold text-sm text-center">Penyakit virus yang menyebabkan daun keriting, sering ditularkan oleh kutu daun.</p>
+                        </div>
+                        <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-2 sm:p-4">
+                            <h4 class="font-bold text-black mb-2 text-center">🪰 Whitefly</h4>
+                            <p class="text-black font-bold text-sm text-center">Hama yang menyebabkan daun menguning dengan menghisap cairan tanaman dan menularkan virus.</p>
+                        </div>
+                        <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-2 sm:p-4">
+                            <h4 class="font-bold text-black mb-2 text-center">💛 Yellowish</h4>
+                            <p class="text-black font-bold text-sm text-center">Menguning secara umum yang menunjukkan kekurangan nutrisi atau stres tanaman.</p>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Instructions -->
+                <div class="bg-black border-4 border-black neobrutalism-shadow sm:p-6 p-4 mb-8">
+                    <h3 class="sm:text-2xl text-base font-bold text-neon-green mb-4">📋 Petunjuk Penggunaan</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-neon-yellow border-2 border-white p-4">
+                            <h4 class="font-bold text-black mb-2">📸 Metode Gambar</h4>
+                            <p class="text-black font-bold text-sm">Unggah foto yang jelas dari daun cabai untuk deteksi penyakit</p>
+                        </div>
+                        <div class="bg-neon-pink border-2 border-white p-4">
+                            <h4 class="font-bold text-black mb-2">🎥 Metode Video</h4>
+                            <p class="text-black font-bold text-sm">Proses file video frame demi frame untuk analisis komprehensif</p>
+                        </div>
+                        <div class="bg-neon-blue border-2 border-white p-4">
+                            <h4 class="font-bold text-black mb-2">📹 Metode Webcam</h4>
+                            <p class="text-black font-bold text-sm">Deteksi real-time menggunakan kamera perangkat Anda</p>
+                        </div>
+                    </div>
+                </div>
+
         <!-- Upload Form -->
         <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
             <form action="/upload" method="POST" enctype="multipart/form-data" class="space-y-6" id="uploadForm">
@@ -74,11 +116,11 @@
 
                 <!-- Input Type Selection -->
                 <div>
-                    <label for="input_type" class="block text-2xl font-bold text-black mb-4">
+                    <label for="input_type" class="block sm:text-2xl text-xl font-bold text-black mb-4">
                         🎯 Metode Deteksi
                     </label>
                     <select name="input_type" id="input_type" required onchange="redirectToWebcam()"
-                            class="w-full p-4 border-4 border-black bg-neon-pink font-bold text-black neobrutalism-shadow-sm text-xl">
+                            class="w-full sm:p-4 p-3 border-4 border-black bg-neon-pink font-bold text-black neobrutalism-shadow-sm sm:text-xl text-base">
                         <option value="image">📸 Analisis Gambar</option>
                         <option value="video">🎥 Pemrosesan Video</option>
                         <option value="webcam">📹 Webcam Langsung</option>
@@ -88,7 +130,7 @@
                 <!-- Submit Button -->
                 <div class="text-center">
                     <button type="submit" id="submitBtn"
-                            class="bg-neon-green border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-black hover:bg-neon-blue transition-colors transform hover:scale-105">
+                            class="bg-neon-green border-4 border-black neobrutalism-shadow sm:px-8 px-4 sm:py-4 py-2 sm:text-2xl text-base font-bold text-black hover:bg-neon-blue transition-colors transform hover:scale-105">
                         🚀 MULAI ANALISIS
                     </button>
                 </div>
@@ -98,51 +140,10 @@
             <a href="{{ url_for('stream_webcam') }}" id="webcamLink" class="hidden"></a>
         </div>
 
-        <!-- Disease Database (Static - Always Visible) -->
-        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 my-8">
-            <h3 class="text-3xl font-bold text-black mb-6 text-center">🦠 Penyakit yang Dapat Dideteksi</h3>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-neon-yellow border-4 border-black neobrutalism-shadow-sm p-4">
-                    <h4 class="font-bold text-black mb-2 text-center">🔴 Leaf Spot</h4>
-                    <p class="text-black font-bold text-sm text-center">Penyakit jamur dengan bercak coklat/hitam yang mengurangi fotosintesis dan hasil panen.</p>
-                </div>
-                <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4">
-                    <h4 class="font-bold text-black mb-2 text-center">🌀 Leaf Curl</h4>
-                    <p class="text-black font-bold text-sm text-center">Penyakit virus yang menyebabkan daun keriting, sering ditularkan oleh kutu daun.</p>
-                </div>
-                <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-4">
-                    <h4 class="font-bold text-black mb-2 text-center">🪰 Whitefly</h4>
-                    <p class="text-black font-bold text-sm text-center">Hama yang menyebabkan daun menguning dengan menghisap cairan tanaman dan menularkan virus.</p>
-                </div>
-                <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-4">
-                    <h4 class="font-bold text-black mb-2 text-center">💛 Yellowish</h4>
-                    <p class="text-black font-bold text-sm text-center">Menguning secara umum yang menunjukkan kekurangan nutrisi atau stres tanaman.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Instructions -->
-        <div class="bg-black border-4 border-black neobrutalism-shadow p-6 mb-8">
-            <h3 class="text-2xl font-bold text-neon-green mb-4">📋 Petunjuk Penggunaan</h3>
-            <div class="grid md:grid-cols-3 gap-4">
-                <div class="bg-neon-yellow border-2 border-white p-4">
-                    <h4 class="font-bold text-black mb-2">📸 Metode Gambar</h4>
-                    <p class="text-black font-bold text-sm">Unggah foto yang jelas dari daun cabai untuk deteksi penyakit</p>
-                </div>
-                <div class="bg-neon-pink border-2 border-white p-4">
-                    <h4 class="font-bold text-black mb-2">🎥 Metode Video</h4>
-                    <p class="text-black font-bold text-sm">Proses file video frame demi frame untuk analisis komprehensif</p>
-                </div>
-                <div class="bg-neon-blue border-2 border-white p-4">
-                    <h4 class="font-bold text-black mb-2">📹 Metode Webcam</h4>
-                    <p class="text-black font-bold text-sm">Deteksi real-time menggunakan kamera perangkat Anda</p>
-                </div>
-            </div>
-        </div>
 
         <!-- Results Section -->
         {% if result_image %}
-        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
+        <div class="result-section bg-white border-4 border-black neobrutalism-shadow p-8 mb-8" id="resultSection">
             <h3 class="text-3xl font-bold text-black mb-6 text-center">🎯 Hasil Deteksi</h3>
             
             <div class="flex justify-center mb-2">
@@ -252,7 +253,7 @@
                     </div>
 
                     <!-- Symptoms -->
-                    <div class="bg-neon-yellow border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                    <div class="bg-neon-yellow border-4 border-white neobrutalism-shadow-sm p-2 sm:p-4 mb-4">
                         <h5 class="text-2xl font-bold text-black mb-3">🔍 Gejala yang Terlihat:</h5>
                         <ul class="space-y-2">
                             {% for symptom in disease.symptoms %}
@@ -265,7 +266,7 @@
                     </div>
 
                     <!-- Treatment Recommendations -->
-                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-2 sm:p-4 mb-4">
                         <h5 class="text-2xl font-bold text-black mb-3">💊 Saran Penanganan:</h5>
                         <div class="space-y-2">
                             {% for treatment in disease.treatments %}
@@ -280,7 +281,7 @@
                     </div>
 
                     <!-- Prevention Tips -->
-                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                    <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-2 sm:p-4 mb-4">
                         <h5 class="text-2xl font-bold text-black mb-3">🛡️ Tips Pencegahan:</h5>
                         <div class="space-y-2">
                             {% for prevention in disease.prevention %}
@@ -335,7 +336,7 @@
         {% endif %}
 
         {% if result_video %}
-        <div class="bg-white border-4 border-black neobrutalism-shadow p-8 mb-8">
+        <div class="result-section bg-white border-4 border-black neobrutalism-shadow p-8 mb-8" id="resultVideoSection">
             <h3 class="text-3xl font-bold text-black mb-6 text-center">🎥 Hasil Analisis Video</h3>
             <div class="flex justify-center mb-6">
                 <div class="border-4 border-black neobrutalism-shadow-sm">
@@ -358,7 +359,7 @@
                     </div>
 
                     <!-- Treatment Recommendations for Video -->
-                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-4 mb-4">
+                    <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-2 sm:p-4 mb-4">
                         <h5 class="text-2xl font-bold text-black mb-3">💊 Saran Penanganan Segera:</h5>
                         <div class="space-y-2">
                             {% for treatment in disease.treatments %}
@@ -383,11 +384,11 @@
         {% endif %}
 
         <!-- Action Buttons -->
-        <div class="flex justify-center space-x-4">
-            <a href="/" class="bg-black border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors">
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="/" class="bg-black border-4 border-black neobrutalism-shadow sm:px-6 px-2 sm:py-3 py-1 sm:text-xl text-base  font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors">
                 ← Kembali ke Beranda
             </a>
-            <a href="/stream_webcam" class="bg-neon-blue border-4 border-black neobrutalism-shadow px-6 py-3 text-xl font-bold text-black hover:bg-neon-pink transition-colors">
+            <a href="/stream_webcam" class="bg-neon-blue border-4 border-black neobrutalism-shadow sm:px-6 px-2 sm:py-3 py-1 sm:text-xl text-base font-bold text-black hover:bg-neon-pink transition-colors">
                 📹 Gunakan Webcam
             </a>
         </div>

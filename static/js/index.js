@@ -315,3 +315,76 @@ function resetPage() {
     window.location.href = '/upload?reset=true';
   }
 }
+
+// Tambahkan fungsi ini ke file index.js Anda
+
+// Function untuk auto scroll ke result section
+function scrollToResults() {
+  const resultSection = document.querySelector('.result-section');
+  if (resultSection) {
+    // Smooth scroll ke result section
+    resultSection.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+    
+    // Tambahkan highlight effect
+    resultSection.classList.add('highlight-result');
+    setTimeout(() => {
+      resultSection.classList.remove('highlight-result');
+    }, 2000);
+  }
+}
+
+// Function untuk cek apakah ada hasil dan auto scroll
+function checkAndScrollToResults() {
+  // Cek apakah halaman memiliki hasil
+  const hasResults = document.querySelector('.result-section') !== null;
+  const fromUpload = document.referrer.includes('/upload') || 
+                    window.location.pathname === '/upload';
+  
+  if (hasResults && fromUpload) {
+    // Delay sedikit untuk memastikan halaman fully loaded
+    setTimeout(() => {
+      scrollToResults();
+    }, 800);
+  }
+}
+
+// Tambahkan event listener untuk auto scroll saat halaman load
+window.addEventListener('load', function() {
+  // Existing load code...
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+
+  if (window.loadingInterval) {
+    clearInterval(window.loadingInterval);
+  }
+  
+  // Auto scroll ke results jika ada
+  checkAndScrollToResults();
+  
+  // Show toast logic (existing code)...
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromReset = urlParams.get('reset');
+  const referrer = document.referrer;
+
+  if (fromReset === 'true' || referrer.includes('/reset')) {
+    setTimeout(() => {
+      showToast('🔄 Reset Berhasil!', 'Halaman telah direset. Silakan pilih file baru untuk dianalisis.', '✅', 'success');
+    }, 500);
+  }
+});
+
+// Enhanced function untuk reset dengan scroll to top
+function resetPage() {
+  if (confirm('🔄 Reset halaman dan upload file baru?')) {
+    // Scroll to top before redirect
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      window.location.href = '/upload?reset=true';
+    }, 300);
+  }
+}

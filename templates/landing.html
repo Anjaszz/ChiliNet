@@ -55,18 +55,18 @@
 
 <!-- About Section -->
 <section id="about" class="max-w-7xl mx-auto px-4 py-16">
-    <div class="bg-white border-4 border-black neobrutalism-shadow p-8">
-        <h2 class="text-4xl font-bold text-black mb-8 text-center">Tentang ChiliNet</h2>
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-4">
+        <h2 class="sm:text-4xl text-2xl font-bold text-black mb-8 text-center">Tentang ChiliNet</h2>
         <div class="grid md:grid-cols-2 gap-8 mb-12">
-            <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm p-6">
-                <h3 class="text-2xl font-bold text-black mb-4">🌶️ Apa yang Kami Lakukan</h3>
-                <p class="text-black font-bold">
+            <div class="bg-neon-blue border-4 border-black neobrutalism-shadow-sm sm:p-6 p-3">
+                <h3 class="sm:text-2xl text-base font-bold text-black mb-4">🌶️ Apa yang Kami Lakukan</h3>
+                <p class="text-black font-bold sm:text-base text-sm sm:text-start text-center">
                     ChiliNet menggunakan teknologi AI mutakhir untuk mengidentifikasi penyakit pada tanaman cabai. Sistem kami mampu mendeteksi berbagai jenis penyakit dan hama yang umum menyerang tanaman cabai dengan akurasi tinggi menggunakan deep learning dan computer vision.
                 </p>
             </div>
-            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm p-6">
+            <div class="bg-neon-pink border-4 border-black neobrutalism-shadow-sm sm:p-6 p-3">
                 <h3 class="text-2xl font-bold text-black mb-4">🚀 Cara Kerjanya</h3>
-                <p class="text-black font-bold">
+                <p class="text-black font-bold sm:text-base text-sm sm:text-start text-center">
                     Cukup unggah gambar atau video tanaman cabai Anda, atau gunakan fitur kamera real-time kami. 
                     Model AI kami akan menganalisis tanaman menggunakan algoritma YOLO v11 dan memberikan diagnosis instan beserta skor kepercayaannya.
                 </p>
@@ -74,15 +74,15 @@
         </div>
 
         <!-- Tech Stack Section -->
-        <div class="bg-black border-4 border-white neobrutalism-shadow p-8">
-            <h2 class="text-3xl font-bold text-neon-green mb-8 text-center">⚡ Technology Stack</h2>
-            <p class="text-white font-bold text-center mb-8">
+        <div class="bg-black border-4 border-white neobrutalism-shadow smL:p-8 p-4">
+            <h2 class="sm:text-3xl text-xl font-bold text-neon-green sm:mb-8 mb-4 text-center">⚡ Technology Stack</h2>
+            <p class="text-white font-bold text-center mb-8 sm:text-base text-sm">
                 Teknologi canggih yang mendukung sistem deteksi penyakit ChiliNet
             </p>
 
             <!-- AI & Machine Learning -->
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-neon-pink mb-4 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-neon-pink mb-4 flex items-center gap-2 text-center">
                     🤖 AI & Machine Learning
                 </h3>
                 <div class="grid md:grid-cols-3 gap-4">
@@ -112,7 +112,7 @@
 
             <!-- Backend Development -->
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-neon-blue mb-4 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-neon-blue mb-4 flex items-center gap-2 text-center">
                     ⚙️ Backend Development
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4">
@@ -135,7 +135,7 @@
 
             <!-- Frontend Development -->
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-neon-yellow mb-4 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-neon-yellow mb-4 flex items-center gap-2 text-center">
                     🎨 Frontend Development
                 </h3>
                 <div class="grid md:grid-cols-3 gap-4">
@@ -165,7 +165,7 @@
 
             <!-- Data & Tools -->
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-neon-green mb-4 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-neon-green mb-4 flex items-center gap-2 text-center">
                     🛠️ Data & Development Tools
                 </h3>
                 <div class="grid md:grid-cols-1 gap-4">
@@ -230,41 +230,69 @@
 </section>
 
     <!-- Diseases Section -->
-    <section id="diseases" class="max-w-7xl mx-auto px-4 py-16">
-        <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
-            <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Penyakit yang Dapat Dideteksi</h2>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-neon-blue border-4 border-white neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">🔴 Leaf Spot</h3>
-                    <p class="text-black font-bold">
-                        Penyakit jamur yang menyebabkan bercak coklat atau hitam pada daun. 
+<!-- Diseases Section -->
+<section id="diseases" class="max-w-7xl mx-auto px-4 py-16">
+    <div class="bg-black border-4 border-black neobrutalism-shadow p-8">
+        <h2 class="text-4xl font-bold text-neon-green mb-8 text-center">Penyakit yang Dapat Dideteksi</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Leaf Spot -->
+            <div class="bg-neon-blue border-4 border-white neobrutalism-shadow-sm p-6">
+                <h3 class="text-xl md:text-2xl font-bold text-black mb-4 text-center">🔴 Leaf Spot</h3>
+                <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    <img src="{{ url_for('static', filename='assets/LeafSpot.jpg') }}" 
+                         alt="Leaf Spot Disease" 
+                         class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
+                </div>
+                <p class="text-black font-bold text-sm md:text-base">
+                    Penyakit jamur yang menyebabkan bercak coklat atau hitam pada daun. 
                     Mengurangi fotosintesis dan dapat menurunkan hasil panen secara signifikan jika tidak ditangani.
-                    </p>
+                </p>
+            </div>
+
+            <!-- Leaf Curl -->
+            <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-6">
+                <h3 class="text-xl md:text-2xl font-bold text-black mb-4 text-center">🌀 Leaf Curl</h3>
+                <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    <img src="{{ url_for('static', filename='assets/LeafCurl.jpg') }}" 
+                         alt="Leaf Curl Disease" 
+                         class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
                 </div>
-                <div class="bg-neon-green border-4 border-white neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">🌀 Leaf Curl</h3>
-                    <p class="text-black font-bold">
-                        Penyakit virus yang menyebabkan daun menggulung dan mengecil. 
+                <p class="text-black font-bold text-sm md:text-base">
+                    Penyakit virus yang menyebabkan daun menggulung dan mengecil. 
                     Sering ditularkan oleh kutu daun dan dapat menyebar dengan cepat di lahan pertanian.
-                    </p>
+                </p>
+            </div>
+
+            <!-- Whitefly -->
+            <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-6">
+                <h3 class="text-xl md:text-2xl font-bold text-black mb-4 text-center">🪰 Whitefly</h3>
+                <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    <img src="{{ url_for('static', filename='assets/whitefly.png') }}" 
+                         alt="Whitefly Pest" 
+                         class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
                 </div>
-                <div class="bg-neon-pink border-4 border-white neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">🪰 Whitefly</h3>
-                    <p class="text-black font-bold">
-                        Serangan hama yang menyebabkan daun menguning dan menggulung. 
-                        Serangga ini menghisap cairan tanaman dan dapat menularkan penyakit virus.
-                    </p>
+                <p class="text-black font-bold text-sm md:text-base">
+                    Serangan hama yang menyebabkan daun menguning dan menggulung. 
+                    Serangga ini menghisap cairan tanaman dan dapat menularkan penyakit virus.
+                </p>
+            </div>
+
+            <!-- Yellowish -->
+            <div class="bg-[#FEE9AE] border-4 border-white neobrutalism-shadow-sm p-6">
+                <h3 class="text-xl md:text-2xl font-bold text-black mb-4 text-center">💛 Yellowish</h3>
+                <div class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-black border-4 border-black mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    <img src="{{ url_for('static', filename='assets/Yellowish.jpg') }}" 
+                         alt="Yellowish Disease" 
+                         class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
                 </div>
-                <div class="bg-[#FEE9AE] border-4 border-white neobrutalism-shadow-sm p-6">
-                    <h3 class="text-2xl font-bold text-black mb-4">💛 Yellowish</h3>
-                    <p class="text-black font-bold">
-                        Menguning secara umum pada daun yang menandakan kekurangan nutrisi, 
-                        stres tanaman, atau tahap awal dari berbagai jenis penyakit.
-                    </p>
-                </div>
+                <p class="text-black font-bold text-sm md:text-base">
+                    Menguning secara umum pada daun yang menandakan kekurangan nutrisi, 
+                    stres tanaman, atau tahap awal dari berbagai jenis penyakit.
+                </p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- Team Section -->
     <section id="team" class="max-w-7xl mx-auto px-4 py-16">
@@ -645,9 +673,9 @@
 
     <!-- CTA Section -->
     <section class="max-w-7xl mx-auto px-4 py-16">
-        <div class="bg-neon-green border-4 border-black neobrutalism-shadow p-8 text-center">
-            <h2 class="text-4xl font-bold text-black mb-4">Siap Melindungi Tanaman Anda?</h2>
-            <p class="text-xl text-black font-bold mb-8">
+        <div class="bg-neon-green border-4 border-black neobrutalism-shadow sm:p-8 p-4 text-center">
+            <h2 class="sm:text-4xl text-2xl font-bold text-black mb-4">Siap Melindungi Tanaman Anda?</h2>
+            <p class="sm:text-xl text-base text-black font-bold mb-8">
                 Mulailah mendeteksi penyakit pada tanaman cabai Anda hari ini dengan sistem bertenaga AI kami
             </p>
             <a href="/upload" class="inline-block bg-black border-4 border-black neobrutalism-shadow px-8 py-4 text-2xl font-bold text-neon-green hover:bg-neon-pink hover:text-black transition-colors transform hover:scale-105">
@@ -783,8 +811,8 @@
 
         <!-- Call to Action -->
         <div class="mt-16 bg-gradient-to-r from-neon-pink via-neon-blue to-neon-green border-4 border-white neobrutalism-shadow-sm p-8 text-center transform hover:scale-105 transition-transform duration-300">
-            <h3 class="text-3xl font-bold text-white neobrutalism-text-shadow mb-4 animate-pulse">🤝 Mari Berkolaborasi!</h3>
-            <p class="text-black font-bold mb-6 text-lg">
+            <h3 class="sm:text-3xl text-xl font-bold text-white neobrutalism-text-shadow mb-4 animate-pulse">🤝 Mari Berkolaborasi!</h3>
+            <p class="text-black font-bold mb-6 sm:text-lg text-sm">
                 Punya ide proyek menarik? Atau ingin berkontribusi pada proyek open-source kami? 
                 Kami selalu terbuka untuk kolaborasi dan pembelajaran bersama!
             </p>
@@ -812,17 +840,17 @@
 
     <!-- Footer -->
     <footer id="contact" class="bg-blue-500 border-t-4 border-black mt-16">
-        <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class=" mx-auto px-2 py-8">
             <div class="text-center">
                 <h3 class="text-2xl font-bold text-neon-green mb-4">ChiliNet</h3>
                 <p class="text-white font-bold mb-4">AI-Powered Agricultural Solutions</p>
-                <div class="flex justify-center space-x-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 justify-center max-w-xl mx-auto">
                     <a href="https://www.instagram.com/anjaszz_" class="text-black hover:text-neon-blue transition-colors">Instagram</a>
                     <a href="https://github.com/Anjaszz" class="text-black hover:text-neon-blue transition-colors">GitHub</a>
                     <a href="/" class="text-black hover:text-neon-blue transition-colors">Research Paper</a>
                     <a href="https://www.facebook.com/AnjasRanii" class="text-black hover:text-neon-blue transition-colors">Contact</a>
                 </div>
-                <p class="text-white mt-4">© 2025 ChiliNet Team. All rights reserved.</p>
+                <p class="text-white mt-4 text-xs">© 2025 ChiliNet Team. All rights reserved.</p>
             </div>
         </div>
     </footer>

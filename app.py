@@ -6,6 +6,7 @@ from roboflow import Roboflow
 import cv2
 import numpy as np
 import logging
+import tempfile
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +25,7 @@ rf = Roboflow(api_key=ROBOFLOW_API_KEY)
 project = rf.workspace("data-cabai").project("penyakit-cabai-klsjq")
 model = project.version(14).model
 
-# Direktori upload
+# Direktori upload (hanya untuk hasil prediksi)
 UPLOAD_FOLDER = 'static/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -269,72 +270,11 @@ def extract_detected_diseases(predictions):
     
     logger.info(f"=== EXTRACTION COMPLETE ===")
     logger.info(f"Total unique diseases: {len(disease_details)}")
-  
     
     return disease_details
 
-# Route untuk landing page
-@app.route('/')
-def landing():
-    return render_template('landing.html')
-
-# Route untuk halaman upload
-@app.route('/upload')
-def index():
-    return render_template('index.html')
-
-# Route untuk streaming webcam
-@app.route('/stream_webcam')
-def stream_webcam():
-    return render_template('webcam.html')
-
-@app.route('/reset')
-def reset_upload():
-    return redirect(url_for('index'))
-
-# Route untuk menangani upload gambar atau video
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return redirect(request.url)
-    
-    file = request.files['file']
-    input_type = request.form.get('input_type')
-
-    if file.filename == '':
-        return redirect(request.url)
-
-    if file:
-        # Simpan file yang diupload
-        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filename)
-
-        # Proses file (gambar atau video)
-        if input_type == "image":
-            return process_image(filename)
-        elif input_type == "video":
-            return process_video(filename)
-    
-    return redirect(url_for('index'))
-
-# Fungsi untuk memproses gambar
-def process_image(image_path):
-    logger.info(f"Processing image: {image_path}")
-    
-    frame = cv2.imread(image_path)
-    if frame is None:
-        return "Gambar tidak ditemukan."
-    
-    # Prediksi dengan logging  
-    logger.info("Making prediction...")
-    predictions = model.predict(frame, confidence=12, overlap=40).json()
-    logger.info(f"Raw prediction response: {predictions}")
-    
-    # Extract detected diseases
-    detected_diseases = extract_detected_diseases(predictions)
-    logger.info(f"Final detected diseases: {len(detected_diseases)} diseases")
-
-    # Gambar bounding boxes dengan koordinat yang benar
+def draw_predictions(frame, predictions):
+    """Draw bounding boxes and labels on frame"""
     for prediction in predictions.get('predictions', []):
         # Roboflow format: x,y adalah center point
         center_x = int(prediction['x'])
@@ -362,87 +302,187 @@ def process_image(image_path):
         text = f"{class_name}: {confidence:.2f}"
         cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
     
-    # Simpan hasil prediksi
-    result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')
-    cv2.imwrite(result_image, frame)
+    return frame
 
-    return render_template('index.html', 
-                         result_image=result_image, 
-                         detected_diseases=detected_diseases,
-                         has_detections=len(detected_diseases) > 0)
+# Route untuk landing page
+@app.route('/')
+def landing():
+    return render_template('landing.html')
 
-# Fungsi untuk memproses video
-# Fungsi untuk memproses video
-def process_video(video_path):
-    logger.info(f"Processing video: {video_path}")
+# Route untuk halaman upload
+@app.route('/upload')
+def index():
+    return render_template('index.html')
+
+# Route untuk streaming webcam
+@app.route('/stream_webcam')
+def stream_webcam():
+    return render_template('webcam.html')
+
+@app.route('/reset')
+def reset_upload():
+    return redirect(url_for('index'))
+
+# Route untuk menangani upload gambar atau video (TANPA MENYIMPAN FILE ASLI)
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return redirect(request.url)
     
-    cap = cv2.VideoCapture(video_path)
-    frames = []
-    all_predictions = []
+    file = request.files['file']
+    input_type = request.form.get('input_type')
+
+    if file.filename == '':
+        return redirect(request.url)
+
+    if file:
+        # Proses file langsung dari memory tanpa menyimpan file asli
+        if input_type == "image":
+            return process_image_from_memory(file)
+        elif input_type == "video":
+            return process_video_from_memory(file)
     
-    while True:
-        ret, frame = cap.read()  
-        if not ret:
-            break
+    return redirect(url_for('index'))
+
+# Fungsi untuk memproses gambar langsung dari memory
+def process_image_from_memory(file_object):
+    logger.info(f"Processing image from memory: {file_object.filename}")
+    
+    try:
+        # Baca file langsung dari memory tanpa menyimpan
+        file_bytes = file_object.read()
         
+        # Convert bytes ke numpy array
+        np_img = np.frombuffer(file_bytes, np.uint8)
+        
+        # Decode gambar menggunakan OpenCV
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            logger.error("Failed to decode image")
+            return render_template('index.html', 
+                                 error_message="Gambar tidak dapat dibaca atau format tidak didukung.",
+                                 detected_diseases=[],
+                                 has_detections=False)
+        
+        # Prediksi dengan logging  
+        logger.info("Making prediction...")
         predictions = model.predict(frame, confidence=12, overlap=40).json()
-        all_predictions.extend(predictions.get('predictions', []))
-
-        # Gambar bounding boxes dengan koordinat yang benar
-        for prediction in predictions.get('predictions', []):
-            # Roboflow format: x,y adalah center point
-            center_x = int(prediction['x'])
-            center_y = int(prediction['y'])
-            width = int(prediction['width'])
-            height = int(prediction['height'])
-            
-            # Convert ke top-left corner coordinates
-            x1 = center_x - width // 2
-            y1 = center_y - height // 2
-            x2 = center_x + width // 2
-            y2 = center_y + height // 2
-            
-            # Pastikan koordinat tidak negatif dan dalam batas gambar
-            x1 = max(0, x1)
-            y1 = max(0, y1)
-            x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
-            y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
-            
-            confidence = prediction['confidence']
-            class_name = prediction['class']
-            
-            # Gambar rectangle dengan koordinat yang benar
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-            text = f"{class_name}: {confidence:.2f}"
-            cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        logger.info(f"Raw prediction response: {predictions}")
         
-        frames.append(frame)
+        # Extract detected diseases
+        detected_diseases = extract_detected_diseases(predictions)
+        logger.info(f"Final detected diseases: {len(detected_diseases)} diseases")
 
-    cap.release()
+        # Gambar bounding boxes
+        frame_with_predictions = draw_predictions(frame, predictions)
+        
+        # Simpan HANYA hasil prediksi (bukan file asli)
+        result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')
+        cv2.imwrite(result_image, frame_with_predictions)
 
-    if not frames:
-        return "Video tidak dapat diproses."
-
-    # Extract detected diseases from all predictions
-    video_predictions = {'predictions': all_predictions}
-    detected_diseases = extract_detected_diseases(video_predictions)
-
-    # Simpan video hasil prediksi
-    result_video = os.path.join(app.config['UPLOAD_FOLDER'], 'result_video.mp4')
-    height, width, _ = frames[0].shape
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(result_video, fourcc, 20.0, (width, height))
+        return render_template('index.html', 
+                             result_image=result_image, 
+                             detected_diseases=detected_diseases,
+                             has_detections=len(detected_diseases) > 0)
     
-    for frame in frames:
-        out.write(frame)
-    out.release()
+    except Exception as e:
+        logger.error(f"Error processing image: {str(e)}")
+        return render_template('index.html', 
+                             error_message=f"Error memproses gambar: {str(e)}",
+                             detected_diseases=[],
+                             has_detections=False)
 
-    return render_template('index.html', 
-                         result_video=result_video,
-                         detected_diseases=detected_diseases,
-                         has_detections=len(detected_diseases) > 0)
+# Fungsi untuk memproses video langsung dari memory
+def process_video_from_memory(file_object):
+    logger.info(f"Processing video from memory: {file_object.filename}")
+    
+    # Untuk video, kita gunakan temporary file karena cv2.VideoCapture
+    # tidak bisa langsung membaca dari memory untuk semua format
+    temp_video = None
+    
+    try:
+        # Buat temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
+            temp_video_path = temp_video.name
+            # Tulis konten file ke temporary file
+            file_object.seek(0)  # Reset file pointer
+            temp_video.write(file_object.read())
+        
+        logger.info(f"Created temporary video file: {temp_video_path}")
+        
+        cap = cv2.VideoCapture(temp_video_path)
+        frames = []
+        all_predictions = []
+        
+        if not cap.isOpened():
+            raise Exception("Cannot open video file")
+        
+        frame_count = 0
+        while True:
+            ret, frame = cap.read()  
+            if not ret:
+                break
+            
+            frame_count += 1
+            logger.info(f"Processing frame {frame_count}")
+            
+            predictions = model.predict(frame, confidence=12, overlap=40).json()
+            all_predictions.extend(predictions.get('predictions', []))
 
-# Fungsi untuk menangkap gambar dari webcam
+            # Gambar bounding boxes
+            frame_with_predictions = draw_predictions(frame, predictions)
+            frames.append(frame_with_predictions)
+
+        cap.release()
+        
+        # Hapus temporary file
+        os.unlink(temp_video_path)
+        logger.info(f"Deleted temporary video file: {temp_video_path}")
+
+        if not frames:
+            return render_template('index.html', 
+                                 error_message="Video tidak dapat diproses atau tidak ada frame yang valid.",
+                                 detected_diseases=[],
+                                 has_detections=False)
+
+        # Extract detected diseases from all predictions
+        video_predictions = {'predictions': all_predictions}
+        detected_diseases = extract_detected_diseases(video_predictions)
+
+        # Simpan video hasil prediksi
+        result_video = os.path.join(app.config['UPLOAD_FOLDER'], 'result_video.mp4')
+        height, width, _ = frames[0].shape
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(result_video, fourcc, 20.0, (width, height))
+        
+        for frame in frames:
+            out.write(frame)
+        out.release()
+
+        logger.info(f"Video processing complete. Processed {len(frames)} frames")
+        
+        return render_template('index.html', 
+                             result_video=result_video,
+                             detected_diseases=detected_diseases,
+                             has_detections=len(detected_diseases) > 0)
+    
+    except Exception as e:
+        logger.error(f"Error processing video: {str(e)}")
+        
+        # Pastikan temporary file terhapus jika ada error
+        if temp_video and os.path.exists(temp_video_path):
+            try:
+                os.unlink(temp_video_path)
+                logger.info(f"Cleaned up temporary file: {temp_video_path}")
+            except:
+                pass
+        
+        return render_template('index.html', 
+                             error_message=f"Error memproses video: {str(e)}",
+                             detected_diseases=[],
+                             has_detections=False)
+
 # Fungsi untuk menangkap gambar dari webcam
 @app.route('/capture_webcam', methods=['POST'])
 def capture_webcam():
@@ -451,67 +491,88 @@ def capture_webcam():
         
         # Mendapatkan gambar dari stream webcam yang dikirim oleh frontend
         image_data = request.form.get('image')
-        if image_data:
-            # Decode gambar yang dikirim dalam format base64
+        if not image_data:
+            return jsonify({'error': 'No image data received'})
+        
+        # Decode gambar yang dikirim dalam format base64
+        if ',' in image_data:
             image_data = image_data.split(',')[1]  # Menghapus prefix data URL
-            image_bytes = base64.b64decode(image_data)
-            np_img = np.frombuffer(image_bytes, np.uint8)
-            frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        
+        image_bytes = base64.b64decode(image_data)
+        np_img = np.frombuffer(image_bytes, np.uint8)
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
-            # Proses gambar menggunakan model
-            logger.info("Making webcam prediction...")
-            predictions = model.predict(frame, confidence=12, overlap=40).json()
-            logger.info(f"Webcam prediction response: {predictions}")
-            
-            # Extract detected diseases
-            detected_diseases = extract_detected_diseases(predictions)
+        if frame is None:
+            return jsonify({'error': 'Failed to decode webcam image'})
 
-            # Gambar hasil prediksi dengan koordinat yang benar
-            for prediction in predictions.get('predictions', []):
-                # Roboflow format: x,y adalah center point
-                center_x = int(prediction['x'])
-                center_y = int(prediction['y'])
-                width = int(prediction['width'])
-                height = int(prediction['height'])
-                
-                # Convert ke top-left corner coordinates
-                x1 = center_x - width // 2
-                y1 = center_y - height // 2
-                x2 = center_x + width // 2
-                y2 = center_y + height // 2
-                
-                # Pastikan koordinat tidak negatif dan dalam batas gambar
-                x1 = max(0, x1)
-                y1 = max(0, y1)
-                x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
-                y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
-                
-                confidence = prediction['confidence']
-                class_name = prediction['class']
-                
-                # Gambar rectangle dengan koordinat yang benar
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
-                text = f"{class_name}: {confidence:.2f}"
-                cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        # Proses gambar menggunakan model
+        logger.info("Making webcam prediction...")
+        predictions = model.predict(frame, confidence=12, overlap=40).json()
+        logger.info(f"Webcam prediction response: {predictions}")
+        
+        # Extract detected diseases
+        detected_diseases = extract_detected_diseases(predictions)
 
-            # Simpan hasil prediksi
-            result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image_from_webcam.jpg')
-            cv2.imwrite(result_image, frame)
+        # Gambar hasil prediksi
+        frame_with_predictions = draw_predictions(frame, predictions)
 
-            # Kirimkan hasil gambar dan informasi penyakit kembali ke frontend
-            response_data = {
-                'result_image': result_image,
-                'detected_diseases': detected_diseases,
-                'has_detections': len(detected_diseases) > 0
-            }
-            
-            logger.info(f"Sending response: {response_data}")
-            return jsonify(response_data)
+        # Simpan hasil prediksi
+        result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image_from_webcam.jpg')
+        cv2.imwrite(result_image, frame_with_predictions)
 
-        return jsonify({'error': 'No image received'})
-    
+        # Kirimkan hasil gambar dan informasi penyakit kembali ke frontend
+        response_data = {
+            'result_image': result_image,
+            'detected_diseases': detected_diseases,
+            'has_detections': len(detected_diseases) > 0
+        }
+        
+        logger.info(f"Sending webcam response: has_detections={len(detected_diseases) > 0}")
+        return jsonify(response_data)
+
     except Exception as e:
         logger.error(f"Webcam capture error: {str(e)}")
+        return jsonify({'error': f'Webcam processing error: {str(e)}'})
+
+# Alternative endpoint untuk processing tanpa menyimpan hasil sama sekali
+@app.route('/process_no_save', methods=['POST'])
+def process_no_save():
+    """Endpoint untuk memproses gambar tanpa menyimpan hasil ke disk"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'})
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'})
+        
+        # Baca file dari memory
+        file_bytes = file.read()
+        np_img = np.frombuffer(file_bytes, np.uint8)
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return jsonify({'error': 'Invalid image format'})
+        
+        # Prediksi
+        predictions = model.predict(frame, confidence=12, overlap=40).json()
+        detected_diseases = extract_detected_diseases(predictions)
+        
+        # Gambar bounding boxes
+        frame_with_predictions = draw_predictions(frame, predictions)
+        
+        # Convert hasil ke base64 untuk dikirim ke frontend
+        _, buffer = cv2.imencode('.jpg', frame_with_predictions)
+        img_base64 = base64.b64encode(buffer).decode('utf-8')
+        
+        return jsonify({
+            'result_image': f"data:image/jpeg;base64,{img_base64}",
+            'detected_diseases': detected_diseases,
+            'has_detections': len(detected_diseases) > 0
+        })
+    
+    except Exception as e:
+        logger.error(f"Process no save error: {str(e)}")
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':

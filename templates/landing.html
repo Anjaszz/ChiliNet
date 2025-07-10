@@ -9,8 +9,65 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-6CGa60nWIQAPV2ct"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .neobrutalism-shadow { box-shadow: 8px 8px 0px 0px #000000; }
+        .neobrutalism-shadow-sm { box-shadow: 4px 4px 0px 0px #000000; }
+        
+        /* Toast Animation */
+        .toast-enter {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        .toast-enter-active {
+            transform: translateX(0);
+            opacity: 1;
+            transition: all 0.5s ease-out;
+        }
+        .toast-exit {
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease-in;
+        }
+        
+        /* Confetti Animation */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 9999;
+            animation: confetti-fall 3s linear;
+        }
+        
+        /* Leaderboard Animation */
+        .leaderboard-item {
+            transition: all 0.3s ease;
+        }
+        .leaderboard-item:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Progress Bar Animation */
+        @keyframes progress-fill {
+            0% { width: 0%; }
+            100% { width: var(--progress-width); }
+        }
+        .progress-bar {
+            animation: progress-fill 1s ease-out;
+        }
+    </style>
 </head>
 <body class="bg-neon-yellow font-mono">
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-4">
+        <!-- Toasts akan ditambahkan di sini -->
+    </div>
+
     <!-- Navigation -->
     <nav class="bg-blue-500 neobrutalism-shadow border-4 border-black  mb-8">
         <div class=" mx-auto px-4 sm:px-6 lg:px-8">
@@ -600,36 +657,148 @@
         </button>
         
         <div class="text-center">
-            <h3 class="text-2xl font-bold text-black mb-4">💝 Donasi via QRIS</h3>
+            <h3 class="text-2xl font-bold text-black mb-4">💝 Donasi ChiliNet</h3>
             <p class="text-black font-bold mb-6">
-                Scan QR Code di bawah dengan aplikasi perbankan atau e-wallet Anda
+                Dukung pengembangan ChiliNet agar tetap gratis untuk semua petani Indonesia
             </p>
             
-            <!-- QR Code Image -->
-            <div class="bg-[#faae2b] border-4 border-black neobrutalism-shadow-sm p-4 mb-6">
-                <img 
-                    src="{{ url_for('static', filename='assets/qris.jpeg') }}" 
-                    alt="QRIS ChiliNet Donation" 
-                    class="w-64 h-64 mx-auto bg-white p-4"
+            <!-- Donation Form -->
+            <form id="donationForm" class="space-y-4">
+                <!-- Nama Donor -->
+                <div class="text-left">
+                    <label class="block text-black font-bold mb-2">Nama Anda *</label>
+                    <input 
+                        type="text" 
+                        id="donorName"
+                        name="donor_name"
+                        placeholder="Masukkan nama Anda..."
+                        class="w-full px-4 py-3 border-4 border-black font-bold text-black placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                        required
+                    >
+                </div>
+                
+                <!-- Nominal Donasi -->
+                <div class="text-left">
+                    <label class="block text-black font-bold mb-2">Nominal Donasi *</label>
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <button type="button" class="preset-amount bg-green-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-green-500 transition-colors" data-amount="5000">
+                            5K
+                        </button>
+                        <button type="button" class="preset-amount bg-green-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-green-500 transition-colors" data-amount="10000">
+                            10K
+                        </button>
+                        <button type="button" class="preset-amount bg-green-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-green-500 transition-colors" data-amount="25000">
+                            25K
+                        </button>
+                        <button type="button" class="preset-amount bg-green-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-green-500 transition-colors" data-amount="50000">
+                            50K
+                        </button>
+                        <button type="button" class="preset-amount bg-green-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-green-500 transition-colors" data-amount="100000">
+                            100K
+                        </button>
+                        <button type="button" class="preset-amount bg-blue-400 border-2 border-black px-3 py-2 text-black font-bold hover:bg-blue-500 transition-colors" data-amount="custom">
+                            Lain
+                        </button>
+                    </div>
+                    <input 
+                        type="number" 
+                        id="donationAmount"
+                        name="amount"
+                        placeholder="Minimal Rp 5.000"
+                        min="5000"
+                        class="w-full px-4 py-3 border-4 border-black font-bold text-black placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                        required
+                    >
+                </div>
+                
+                <!-- Pesan Opsional -->
+                <div class="text-left">
+                    <label class="block text-black font-bold mb-2">Pesan (Opsional)</label>
+                    <textarea 
+                        id="donationMessage"
+                        name="message"
+                        placeholder="Tulis pesan atau request fitur..."
+                        rows="3"
+                        class="w-full px-4 py-3 border-4 border-black font-bold text-black placeholder-gray-600 focus:outline-none focus:border-blue-500 resize-none"
+                    ></textarea>
+                </div>
+                
+                <!-- Submit Button -->
+                <button 
+                    type="submit"
+                    id="donateButton"
+                    class="w-full bg-green-500 border-4 border-black neobrutalism-shadow-sm px-6 py-4 text-white font-bold hover:bg-green-600 transition-colors transform hover:scale-105"
                 >
+                    💳 DONASI SEKARANG
+                </button>
+            </form>
+            
+            <p class="text-black font-bold mt-4 text-xs">
+                Pembayaran aman menggunakan Midtrans • Mendukung semua bank dan e-wallet
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Leaderboard Modal -->
+<div id="leaderboardModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8 max-w-2xl mx-4 relative max-h-[80vh] overflow-y-auto">
+        <button 
+            id="closeLeaderboard" 
+            class="absolute top-4 right-4 bg-red-500 text-white w-8 h-8 rounded-full font-bold hover:bg-red-600 transition-colors"
+        >
+            ✕
+        </button>
+        
+        <div class="text-center">
+            <h3 class="text-3xl font-bold text-black mb-6">🏆 Donation Leaderboard</h3>
+            <p class="text-black font-bold mb-8">
+                Terima kasih kepada para donatur yang telah mendukung ChiliNet!
+            </p>
+            
+            <div id="leaderboardContent" class="space-y-4">
+                <!-- Leaderboard akan dimuat di sini -->
             </div>
             
-            <div class="bg-neon-green border-4 border-black neobrutalism-shadow-sm p-4 mb-4">
-                <p class="text-black font-bold text-sm">
-                    🏦 Kompatibel dengan: GoPay, OVO, DANA, ShopeePay, BCA, Mandiri, BRI, BNI, dan semua bank/e-wallet yang mendukung QRIS
+            <div class="mt-8 bg-green-100 border-4 border-green-500 p-4">
+                <p class="text-green-700 font-bold text-sm">
+                    💡 Ingin nama Anda muncul di sini? Donasi sekarang dan dukung pengembangan ChiliNet!
                 </p>
             </div>
-            
-            <p class="text-black font-bold text-xs mb-4">
-                Sudah donasi? Hubungi kami untuk request fitur khusus atau prioritas pengembangan yang Anda inginkan
-            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content (contoh penggunaan) -->
+<div class="max-w-4xl mx-auto px-4 py-16">
+    <div class="bg-white border-4 border-black neobrutalism-shadow p-8 text-center mb-8">
+        <h1 class="text-4xl font-bold text-black mb-4">ChiliNet Donation System</h1>
+        <p class="text-black font-bold mb-8">
+            Sistem donasi real-time dengan notifikasi live dan leaderboard
+        </p>
+        
+        <div class="flex gap-4 justify-center">
+            <button 
+                id="donationBtn"
+                class="bg-green-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-green-600 transition-colors"
+            >
+                💝 DONASI
+            </button>
             
             <button 
-                id="whatsappBtn"
-                class="bg-green-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-green-600 transition-colors w-full"
+                id="leaderboardBtn"
+                class="bg-blue-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-blue-600 transition-colors"
             >
-            💬 Request Fitur via WhatsApp
+                🏆 LEADERBOARD
             </button>
+        </div>
+    </div>
+    
+    <!-- Recent Donations -->
+    <div class="bg-black border-4 border-white neobrutalism-shadow p-8">
+        <h2 class="text-2xl font-bold text-green-400 mb-6 text-center">💚 Donasi Terbaru</h2>
+        <div id="recentDonations" class="space-y-4">
+            <!-- Recent donations akan dimuat di sini -->
         </div>
     </div>
 </div>

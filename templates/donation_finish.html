@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terima Kasih - ChiliNet Donation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .neobrutalism-shadow { box-shadow: 8px 8px 0px 0px #000000; }
+        .neobrutalism-shadow-sm { box-shadow: 4px 4px 0px 0px #000000; }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .bounce-in {
+            animation: bounce-in 0.6s ease-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-heart {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .pulse-heart {
+            animation: pulse-heart 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-200 via-yellow-200 to-pink-200 font-mono min-h-screen">
+    <div class="min-h-screen flex items-center justify-center px-4 py-8">
+        <div class="max-w-2xl w-full">
+            <!-- Main Success Card -->
+            <div class="bg-white border-4 border-black neobrutalism-shadow p-8 text-center bounce-in">
+                <!-- Success Icon -->
+                <div class="mb-6">
+                    <div class="text-8xl mb-4 pulse-heart">💚</div>
+                    <h1 class="text-4xl font-bold text-green-600 mb-2">Terima Kasih!</h1>
+                    <p class="text-xl text-black font-bold">Donasi Anda Berhasil</p>
+                </div>
+                
+                {% if donation %}
+                <!-- Donation Details -->
+                <div class="bg-green-100 border-4 border-green-500 neobrutalism-shadow-sm p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-black mb-4">Detail Donasi</h2>
+                    <div class="grid md:grid-cols-2 gap-4 text-left">
+                        <div>
+                            <p class="text-sm text-gray-600 font-bold">Nama Donatur</p>
+                            <p class="text-lg font-bold text-black">{{ donation.donor_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 font-bold">Jumlah Donasi</p>
+                            <p class="text-lg font-bold text-green-600">Rp {{ "{:,}".format(donation.amount).replace(',', '.') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 font-bold">Order ID</p>
+                            <p class="text-sm font-bold text-black font-mono">{{ donation.order_id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 font-bold">Status</p>
+                            <p class="text-lg font-bold text-green-600">✅ Berhasil</p>
+                        </div>
+                        {% if donation.message %}
+                        <div class="md:col-span-2">
+                            <p class="text-sm text-gray-600 font-bold">Pesan</p>
+                            <p class="text-black font-bold italic">"{{ donation.message }}"</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Impact Message -->
+                <div class="bg-yellow-100 border-4 border-yellow-500 neobrutalism-shadow-sm p-6 mb-6">
+                    <h3 class="text-xl font-bold text-black mb-3">🌱 Dampak Donasi Anda</h3>
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div class="float" style="animation-delay: 0s;">
+                            <div class="text-3xl mb-2">🚀</div>
+                            <p class="text-sm font-bold text-black">Pengembangan Fitur AI</p>
+                        </div>
+                        <div class="float" style="animation-delay: 0.5s;">
+                            <div class="text-3xl mb-2">⚡</div>
+                            <p class="text-sm font-bold text-black">Server & Hosting</p>
+                        </div>
+                        <div class="float" style="animation-delay: 1s;">
+                            <div class="text-3xl mb-2">🔬</div>
+                            <p class="text-sm font-bold text-black">Riset & Dataset</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                    <a 
+                        href="https://wa.me/6282258040148?text=Halo%20ChiliNet%20Team!%20Saya%20telah%20melakukan%20donasi%20dan%20ingin%20request%20fitur%20atau%20prioritas%20pengembangan.%20Order%20ID:%20{{ donation.order_id if donation else 'N/A' }}"
+                        target="_blank"
+                        class="bg-green-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-green-600 transition-colors transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                    >
+                        💬 Request Fitur
+                    </a>
+                    
+                    <button 
+                        id="shareBtn"
+                        class="bg-blue-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-blue-600 transition-colors transform hover:scale-105"
+                    >
+                        📤 Share Donasi
+                    </button>
+                </div>
+                
+                <!-- Social Proof -->
+                <div class="bg-pink-100 border-4 border-pink-500 neobrutalism-shadow-sm p-4 mb-6">
+                    <p class="text-black font-bold text-sm">
+                        🙏 Bergabunglah dengan <span class="text-pink-600" id="donorCount">100+</span> donatur lainnya yang telah mendukung ChiliNet untuk tetap gratis bagi petani Indonesia
+                    </p>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex gap-4 justify-center">
+                    <a 
+                        href="/"
+                        class="bg-black border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-white font-bold hover:bg-gray-800 transition-colors"
+                    >
+                        🏠 Kembali ke Home
+                    </a>
+                    
+                    <a 
+                        href="/upload"
+                        class="bg-yellow-500 border-4 border-black neobrutalism-shadow-sm px-6 py-3 text-black font-bold hover:bg-yellow-600 transition-colors"
+                    >
+                        🌶️ Coba ChiliNet
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Footer Message -->
+            <div class="text-center mt-8">
+                <p class="text-black font-bold text-sm opacity-75">
+                    💚 Donasi Anda akan membantu ChiliNet tetap gratis dan terus berkembang
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Share functionality
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            const shareData = {
+                title: 'Saya telah berdonasi untuk ChiliNet!',
+                text: 'Saya baru saja berdonasi untuk mendukung pengembangan ChiliNet - sistem AI deteksi penyakit cabai yang gratis untuk petani Indonesia! 🌶️💚',
+                url: window.location.origin
+            };
+            
+            if (navigator.share) {
+                navigator.share(shareData);
+            } else {
+                // Fallback: copy to clipboard
+                const text = `${shareData.text}\n\nKunjungi: ${shareData.url}`;
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ Teks berhasil disalin ke clipboard!');
+                }).catch(() => {
+                    // Fallback: show share text
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                    modal.innerHTML = `
+                        <div class="bg-white border-4 border-black neobrutalism-shadow p-6 max-w-md mx-4">
+                            <h3 class="text-xl font-bold mb-4">📤 Share Donasi</h3>
+                            <textarea class="w-full p-3 border-2 border-gray-300 mb-4" rows="4" readonly>${text}</textarea>
+                            <button onclick="this.parentElement.parentElement.remove()" class="bg-blue-500 text-white px-4 py-2 font-bold">Tutup</button>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                });
+            }
+        });
+        
+        // Load donor count
+        async function loadDonorStats() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+                if (data.success) {
+                    const donorCount = data.leaderboard.length;
+                    document.getElementById('donorCount').textContent = `${donorCount}+`;
+                }
+            } catch (error) {
+                console.log('Could not load donor stats');
+            }
+        }
+        
+        loadDonorStats();
+        
+        // Auto-redirect after 30 seconds
+        setTimeout(() => {
+            const countdown = document.createElement('div');
+            countdown.className = 'fixed bottom-4 right-4 bg-yellow-500 border-2 border-black p-3 font-bold text-black';
+            countdown.innerHTML = 'Redirect ke home dalam <span id="countdown">10</span> detik...';
+            document.body.appendChild(countdown);
+            
+            let seconds = 10;
+            const interval = setInterval(() => {
+                seconds--;
+                document.getElementById('countdown').textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = '/';
+                }
+            }, 1000);
+        }, 20000);
+    </script>
+</body>
+</html>

@@ -5,27 +5,50 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from roboflow import Roboflow
 import cv2
 import numpy as np
+import json
+from datetime import datetime
+from flask_socketio import SocketIO, emit
+import midtransclient
 import logging
-import tempfile
 
 # Load environment variables
 load_dotenv()
 
-ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY')
+# Midtrans Configuration
+MIDTRANS_SERVER_KEY = os.getenv('MIDTRANS_SERVER_KEY')
+MIDTRANS_CLIENT_KEY = os.getenv('MIDTRANS_CLIENT_KEY')
+MIDTRANS_IS_PRODUCTION = os.getenv('MIDTRANS_IS_PRODUCTION', 'False').lower() == 'true'
 
-# Setup logging untuk debugging
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.info(f"- IS_PRODUCTION: {MIDTRANS_IS_PRODUCTION}")
+logger.info(f"- SERVER_KEY: {MIDTRANS_SERVER_KEY[:20]}..." if MIDTRANS_SERVER_KEY else "None")
+logger.info(f"- CLIENT_KEY: {MIDTRANS_CLIENT_KEY[:20]}..." if MIDTRANS_CLIENT_KEY else "None")
 
-# Inisialisasi Flask
+# Inisialisasi Flask dan SocketIO
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456')
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Inisialisasi Midtrans
+snap = midtransclient.Snap(
+    is_production=MIDTRANS_IS_PRODUCTION,
+    server_key=MIDTRANS_SERVER_KEY,
+     client_key=MIDTRANS_CLIENT_KEY 
+)
+
+# File untuk menyimpan data donasi (dalam produksi gunakan database)
+DONATIONS_FILE = 'donations.json'
+
+ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY')
 
 # Inisialisasi Roboflow
 rf = Roboflow(api_key=ROBOFLOW_API_KEY)
 project = rf.workspace("data-cabai").project("penyakit-cabai-klsjq")
 model = project.version(14).model
 
-# Direktori upload (hanya untuk hasil prediksi)
+# Direktori upload
 UPLOAD_FOLDER = 'static/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -270,39 +293,9 @@ def extract_detected_diseases(predictions):
     
     logger.info(f"=== EXTRACTION COMPLETE ===")
     logger.info(f"Total unique diseases: {len(disease_details)}")
+  
     
     return disease_details
-
-def draw_predictions(frame, predictions):
-    """Draw bounding boxes and labels on frame"""
-    for prediction in predictions.get('predictions', []):
-        # Roboflow format: x,y adalah center point
-        center_x = int(prediction['x'])
-        center_y = int(prediction['y'])
-        width = int(prediction['width'])
-        height = int(prediction['height'])
-        
-        # Convert ke top-left corner coordinates
-        x1 = center_x - width // 2
-        y1 = center_y - height // 2
-        x2 = center_x + width // 2
-        y2 = center_y + height // 2
-        
-        # Pastikan koordinat tidak negatif dan dalam batas gambar
-        x1 = max(0, x1)
-        y1 = max(0, y1)
-        x2 = min(frame.shape[1], x2)  # frame.shape[1] = width
-        y2 = min(frame.shape[0], y2)  # frame.shape[0] = height
-        
-        confidence = prediction['confidence']
-        class_name = prediction['class']
-        
-        # Gambar rectangle dengan koordinat yang benar
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (56, 33, 229), 2)
-        text = f"{class_name}: {confidence:.2f}"
-        cv2.putText(frame, text, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-    
-    return frame
 
 # Route untuk landing page
 @app.route('/')
@@ -323,7 +316,7 @@ def stream_webcam():
 def reset_upload():
     return redirect(url_for('index'))
 
-# Route untuk menangani upload gambar atau video (TANPA MENYIMPAN FILE ASLI)
+# Route untuk menangani upload gambar atau video
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -336,152 +329,102 @@ def upload_file():
         return redirect(request.url)
 
     if file:
-        # Proses file langsung dari memory tanpa menyimpan file asli
+        # Simpan file yang diupload
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+
+        # Proses file (gambar atau video)
         if input_type == "image":
-            return process_image_from_memory(file)
+            return process_image(filename)
         elif input_type == "video":
-            return process_video_from_memory(file)
+            return process_video(filename)
     
     return redirect(url_for('index'))
 
-# Fungsi untuk memproses gambar langsung dari memory
-def process_image_from_memory(file_object):
-    logger.info(f"Processing image from memory: {file_object.filename}")
+# Fungsi untuk memproses gambar
+def process_image(image_path):
+    logger.info(f"Processing image: {image_path}")
     
-    try:
-        # Baca file langsung dari memory tanpa menyimpan
-        file_bytes = file_object.read()
+    frame = cv2.imread(image_path)
+    if frame is None:
+        return "Gambar tidak ditemukan."
+    
+    # Prediksi dengan logging  
+    logger.info("Making prediction...")
+    predictions = model.predict(frame, confidence=12, overlap=40).json()
+    logger.info(f"Raw prediction response: {predictions}")
+    
+    # Extract detected diseases
+    detected_diseases = extract_detected_diseases(predictions)
+    logger.info(f"Final detected diseases: {len(detected_diseases)} diseases")
+
+    # Gambar bounding boxes
+    for prediction in predictions.get('predictions', []):
+        x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+        confidence = prediction['confidence']
+        class_name = prediction['class']
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (56, 33, 229), 2)
+        text = f"{class_name}: {confidence:.2f}"
+        cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255) , 2)
+    
+    # Simpan hasil prediksi
+    result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')
+    cv2.imwrite(result_image, frame)
+
+    return render_template('index.html', 
+                         result_image=result_image, 
+                         detected_diseases=detected_diseases,
+                         has_detections=len(detected_diseases) > 0)
+
+# Fungsi untuk memproses video
+def process_video(video_path):
+    logger.info(f"Processing video: {video_path}")
+    
+    cap = cv2.VideoCapture(video_path)
+    frames = []
+    all_predictions = []
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
         
-        # Convert bytes ke numpy array
-        np_img = np.frombuffer(file_bytes, np.uint8)
-        
-        # Decode gambar menggunakan OpenCV
-        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
-        
-        if frame is None:
-            logger.error("Failed to decode image")
-            return render_template('index.html', 
-                                 error_message="Gambar tidak dapat dibaca atau format tidak didukung.",
-                                 detected_diseases=[],
-                                 has_detections=False)
-        
-        # Prediksi dengan logging  
-        logger.info("Making prediction...")
         predictions = model.predict(frame, confidence=12, overlap=40).json()
-        logger.info(f"Raw prediction response: {predictions}")
-        
-        # Extract detected diseases
-        detected_diseases = extract_detected_diseases(predictions)
-        logger.info(f"Final detected diseases: {len(detected_diseases)} diseases")
+        all_predictions.extend(predictions.get('predictions', []))
 
-        # Gambar bounding boxes
-        frame_with_predictions = draw_predictions(frame, predictions)
+        for prediction in predictions.get('predictions', []):
+            x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+            confidence = prediction['confidence']
+            class_name = prediction['class']
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            text = f"{class_name}: {confidence:.2f}"
+            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         
-        # Simpan HANYA hasil prediksi (bukan file asli)
-        result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image.jpg')
-        cv2.imwrite(result_image, frame_with_predictions)
+        frames.append(frame)
 
-        return render_template('index.html', 
-                             result_image=result_image, 
-                             detected_diseases=detected_diseases,
-                             has_detections=len(detected_diseases) > 0)
+    cap.release()
+
+    if not frames:
+        return "Video tidak dapat diproses."
+
+    # Extract detected diseases from all predictions
+    video_predictions = {'predictions': all_predictions}
+    detected_diseases = extract_detected_diseases(video_predictions)
+
+    # Simpan video hasil prediksi
+    result_video = os.path.join(app.config['UPLOAD_FOLDER'], 'result_video.mp4')
+    height, width, _ = frames[0].shape
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(result_video, fourcc, 20.0, (width, height))
     
-    except Exception as e:
-        logger.error(f"Error processing image: {str(e)}")
-        return render_template('index.html', 
-                             error_message=f"Error memproses gambar: {str(e)}",
-                             detected_diseases=[],
-                             has_detections=False)
+    for frame in frames:
+        out.write(frame)
+    out.release()
 
-# Fungsi untuk memproses video langsung dari memory
-def process_video_from_memory(file_object):
-    logger.info(f"Processing video from memory: {file_object.filename}")
-    
-    # Untuk video, kita gunakan temporary file karena cv2.VideoCapture
-    # tidak bisa langsung membaca dari memory untuk semua format
-    temp_video = None
-    
-    try:
-        # Buat temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
-            temp_video_path = temp_video.name
-            # Tulis konten file ke temporary file
-            file_object.seek(0)  # Reset file pointer
-            temp_video.write(file_object.read())
-        
-        logger.info(f"Created temporary video file: {temp_video_path}")
-        
-        cap = cv2.VideoCapture(temp_video_path)
-        frames = []
-        all_predictions = []
-        
-        if not cap.isOpened():
-            raise Exception("Cannot open video file")
-        
-        frame_count = 0
-        while True:
-            ret, frame = cap.read()  
-            if not ret:
-                break
-            
-            frame_count += 1
-            logger.info(f"Processing frame {frame_count}")
-            
-            predictions = model.predict(frame, confidence=12, overlap=40).json()
-            all_predictions.extend(predictions.get('predictions', []))
-
-            # Gambar bounding boxes
-            frame_with_predictions = draw_predictions(frame, predictions)
-            frames.append(frame_with_predictions)
-
-        cap.release()
-        
-        # Hapus temporary file
-        os.unlink(temp_video_path)
-        logger.info(f"Deleted temporary video file: {temp_video_path}")
-
-        if not frames:
-            return render_template('index.html', 
-                                 error_message="Video tidak dapat diproses atau tidak ada frame yang valid.",
-                                 detected_diseases=[],
-                                 has_detections=False)
-
-        # Extract detected diseases from all predictions
-        video_predictions = {'predictions': all_predictions}
-        detected_diseases = extract_detected_diseases(video_predictions)
-
-        # Simpan video hasil prediksi
-        result_video = os.path.join(app.config['UPLOAD_FOLDER'], 'result_video.mp4')
-        height, width, _ = frames[0].shape
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(result_video, fourcc, 20.0, (width, height))
-        
-        for frame in frames:
-            out.write(frame)
-        out.release()
-
-        logger.info(f"Video processing complete. Processed {len(frames)} frames")
-        
-        return render_template('index.html', 
-                             result_video=result_video,
-                             detected_diseases=detected_diseases,
-                             has_detections=len(detected_diseases) > 0)
-    
-    except Exception as e:
-        logger.error(f"Error processing video: {str(e)}")
-        
-        # Pastikan temporary file terhapus jika ada error
-        if temp_video and os.path.exists(temp_video_path):
-            try:
-                os.unlink(temp_video_path)
-                logger.info(f"Cleaned up temporary file: {temp_video_path}")
-            except:
-                pass
-        
-        return render_template('index.html', 
-                             error_message=f"Error memproses video: {str(e)}",
-                             detected_diseases=[],
-                             has_detections=False)
+    return render_template('index.html', 
+                         result_video=result_video,
+                         detected_diseases=detected_diseases,
+                         has_detections=len(detected_diseases) > 0)
 
 # Fungsi untuk menangkap gambar dari webcam
 @app.route('/capture_webcam', methods=['POST'])
@@ -491,89 +434,386 @@ def capture_webcam():
         
         # Mendapatkan gambar dari stream webcam yang dikirim oleh frontend
         image_data = request.form.get('image')
-        if not image_data:
-            return jsonify({'error': 'No image data received'})
-        
-        # Decode gambar yang dikirim dalam format base64
-        if ',' in image_data:
+        if image_data:
+            # Decode gambar yang dikirim dalam format base64
             image_data = image_data.split(',')[1]  # Menghapus prefix data URL
-        
-        image_bytes = base64.b64decode(image_data)
-        np_img = np.frombuffer(image_bytes, np.uint8)
-        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+            image_bytes = base64.b64decode(image_data)
+            np_img = np.frombuffer(image_bytes, np.uint8)
+            frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
-        if frame is None:
-            return jsonify({'error': 'Failed to decode webcam image'})
+            # Proses gambar menggunakan model
+            logger.info("Making webcam prediction...")
+            predictions = model.predict(frame, confidence=12, overlap=40).json()
+            logger.info(f"Webcam prediction response: {predictions}")
+            
+            # Extract detected diseases
+            detected_diseases = extract_detected_diseases(predictions)
 
-        # Proses gambar menggunakan model
-        logger.info("Making webcam prediction...")
-        predictions = model.predict(frame, confidence=12, overlap=40).json()
-        logger.info(f"Webcam prediction response: {predictions}")
-        
-        # Extract detected diseases
-        detected_diseases = extract_detected_diseases(predictions)
+            # Gambar hasil prediksi
+            for prediction in predictions.get('predictions', []):
+                x, y, w, h = int(prediction['x']), int(prediction['y']), int(prediction['width']), int(prediction['height'])
+                confidence = prediction['confidence']
+                class_name = prediction['class']
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                text = f"{class_name}: {confidence:.2f}"
+                cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-        # Gambar hasil prediksi
-        frame_with_predictions = draw_predictions(frame, predictions)
+            # Simpan hasil prediksi
+            result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image_from_webcam.jpg')
+            cv2.imwrite(result_image, frame)
 
-        # Simpan hasil prediksi
-        result_image = os.path.join(app.config['UPLOAD_FOLDER'], 'result_image_from_webcam.jpg')
-        cv2.imwrite(result_image, frame_with_predictions)
+            # Kirimkan hasil gambar dan informasi penyakit kembali ke frontend
+            response_data = {
+                'result_image': result_image,
+                'detected_diseases': detected_diseases,
+                'has_detections': len(detected_diseases) > 0
+            }
+            
+            logger.info(f"Sending response: {response_data}")
+            return jsonify(response_data)
 
-        # Kirimkan hasil gambar dan informasi penyakit kembali ke frontend
-        response_data = {
-            'result_image': result_image,
-            'detected_diseases': detected_diseases,
-            'has_detections': len(detected_diseases) > 0
-        }
-        
-        logger.info(f"Sending webcam response: has_detections={len(detected_diseases) > 0}")
-        return jsonify(response_data)
-
-    except Exception as e:
-        logger.error(f"Webcam capture error: {str(e)}")
-        return jsonify({'error': f'Webcam processing error: {str(e)}'})
-
-# Alternative endpoint untuk processing tanpa menyimpan hasil sama sekali
-@app.route('/process_no_save', methods=['POST'])
-def process_no_save():
-    """Endpoint untuk memproses gambar tanpa menyimpan hasil ke disk"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file uploaded'})
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'})
-        
-        # Baca file dari memory
-        file_bytes = file.read()
-        np_img = np.frombuffer(file_bytes, np.uint8)
-        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
-        
-        if frame is None:
-            return jsonify({'error': 'Invalid image format'})
-        
-        # Prediksi
-        predictions = model.predict(frame, confidence=12, overlap=40).json()
-        detected_diseases = extract_detected_diseases(predictions)
-        
-        # Gambar bounding boxes
-        frame_with_predictions = draw_predictions(frame, predictions)
-        
-        # Convert hasil ke base64 untuk dikirim ke frontend
-        _, buffer = cv2.imencode('.jpg', frame_with_predictions)
-        img_base64 = base64.b64encode(buffer).decode('utf-8')
-        
-        return jsonify({
-            'result_image': f"data:image/jpeg;base64,{img_base64}",
-            'detected_diseases': detected_diseases,
-            'has_detections': len(detected_diseases) > 0
-        })
+        return jsonify({'error': 'No image received'})
     
     except Exception as e:
-        logger.error(f"Process no save error: {str(e)}")
+        logger.error(f"Webcam capture error: {str(e)}")
         return jsonify({'error': str(e)})
 
+
+def load_donations():
+    """Load donations from JSON file"""
+    try:
+        if os.path.exists(DONATIONS_FILE):
+            with open(DONATIONS_FILE, 'r') as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logger.error(f"Error loading donations: {e}")
+        return []
+
+def save_donations(donations):
+    """Save donations to JSON file"""
+    try:
+        with open(DONATIONS_FILE, 'w') as f:
+            json.dump(donations, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving donations: {e}")
+
+def get_leaderboard():
+    """Get donation leaderboard"""
+    donations = load_donations()
+    # Group by donor name and sum amounts
+    leaderboard = {}
+    
+    for donation in donations:
+        if donation['status'] == 'success':
+            name = donation['donor_name']
+            amount = donation['amount']
+            
+            if name in leaderboard:
+                leaderboard[name]['total_amount'] += amount
+                leaderboard[name]['donation_count'] += 1
+            else:
+                leaderboard[name] = {
+                    'name': name,
+                    'total_amount': amount,
+                    'donation_count': 1,
+                    'last_donation': donation['created_at']
+                }
+    
+    # Convert to list and sort by total amount
+    leaderboard_list = list(leaderboard.values())
+    leaderboard_list.sort(key=lambda x: x['total_amount'], reverse=True)
+    
+    return leaderboard_list
+
+# Route untuk donasi
+# Route untuk donasi - FINAL VERSION
+@app.route('/donate', methods=['POST'])
+def create_donation():
+    try:
+        logger.info("=== DONATION REQUEST RECEIVED ===")
+        
+        # Check Midtrans config
+        if not MIDTRANS_SERVER_KEY:
+            logger.error("MIDTRANS_SERVER_KEY not configured")
+            return jsonify({
+                'success': False,
+                'message': 'Midtrans configuration error'
+            }), 500
+        
+        data = request.get_json()
+        logger.info(f"Request data: {data}")
+        
+        donor_name = data.get('donor_name', '').strip()
+        amount = int(data.get('amount', 0))
+        message = data.get('message', '').strip()
+        
+        if not donor_name or amount < 5000:
+            return jsonify({
+                'success': False,
+                'message': 'Nama donor dan minimal donasi Rp 5.000 wajib diisi'
+            }), 400
+        
+        # Generate unique order ID menggunakan datetime
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        order_id = f"DONATION-{timestamp}"
+        logger.info(f"Generated order_id: {order_id}")
+        
+        # Midtrans transaction details
+        transaction_details = {
+            "order_id": order_id,
+            "gross_amount": amount
+        }
+        
+        item_details = [{
+            "id": "donation-001",
+            "price": amount,
+            "quantity": 1,
+            "name": "Donasi ChiliNet Development",
+            "category": "donation"
+        }]
+        
+        customer_details = {
+            "first_name": donor_name,
+            "last_name": "",
+            "email": f"donor-{timestamp}@chilinet.com",
+            "phone": "+62000000000"
+        }
+        
+        transaction_data = {
+            "transaction_details": transaction_details,
+            "item_details": item_details,
+            "customer_details": customer_details,
+            "credit_card": {
+                "secure": True
+            },
+            "callbacks": {
+                "finish": f"{request.host_url}donation/finish?order_id={order_id}"
+            }
+        }
+        
+        logger.info(f"Transaction data: {transaction_data}")
+        
+        # Create Snap transaction
+        try:
+            transaction = snap.create_transaction(transaction_data)
+            logger.info(f"✅ Midtrans transaction created: {transaction}")
+        except Exception as midtrans_error:
+            logger.error(f"❌ Midtrans error: {midtrans_error}")
+            return jsonify({
+                'success': False,
+                'message': f'Midtrans error: {str(midtrans_error)}'
+            }), 500
+        
+        # Save donation record
+        donations = load_donations()
+        donation_record = {
+            "order_id": order_id,
+            "donor_name": donor_name,
+            "amount": amount,
+            "message": message,
+            "status": "pending",
+            "snap_token": transaction['token'],
+            "created_at": datetime.now().isoformat()
+        }
+        
+        donations.append(donation_record)
+        save_donations(donations)
+        
+        logger.info(f"✅ Donation saved: {order_id} - {donor_name} - Rp {amount:,}")
+        
+        return jsonify({
+            'success': True,
+            'snap_token': transaction['token'],
+            'order_id': order_id
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error creating donation: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'message': f'Terjadi kesalahan sistem: {str(e)}'
+        }), 500
+
+# Webhook untuk menerima notifikasi dari Midtrans
+@app.route('/midtrans/notification', methods=['POST'])
+def midtrans_notification():
+    try:
+        notification = request.get_json()
+        order_id = notification.get('order_id')
+        transaction_status = notification.get('transaction_status')
+        fraud_status = notification.get('fraud_status', 'accept')
+        
+        logger.info(f"🔔 Midtrans notification: {order_id} - {transaction_status}")
+        
+        # Load donations
+        donations = load_donations()
+        
+        # Find donation record
+        donation_index = None
+        for i, donation in enumerate(donations):
+            if donation['order_id'] == order_id:
+                donation_index = i
+                break
+        
+        if donation_index is None:
+            logger.warning(f"❌ Donation not found: {order_id}")
+            return jsonify({'status': 'not_found'}), 404
+        
+        # Update donation status
+        old_status = donations[donation_index]['status']
+        
+        if transaction_status == 'capture' or transaction_status == 'settlement':
+            if fraud_status == 'accept':
+                donations[donation_index]['status'] = 'success'
+                donations[donation_index]['paid_at'] = datetime.now().isoformat()
+                logger.info(f"✅ Donation marked as successful: {order_id}")
+        elif transaction_status == 'pending':
+            donations[donation_index]['status'] = 'pending'
+            logger.info(f"⏳ Donation pending: {order_id}")
+        elif transaction_status in ['deny', 'cancel', 'expire']:
+            donations[donation_index]['status'] = 'failed'
+            logger.info(f"❌ Donation failed: {order_id}")
+        
+        save_donations(donations)
+        
+        # Emit real-time notifications jika status berubah ke success
+        if old_status != 'success' and donations[donation_index]['status'] == 'success':
+            donation_data = donations[donation_index]
+            
+            # Emit donation notification
+            socketio.emit('new_donation', {
+                'donor_name': donation_data['donor_name'],
+                'amount': donation_data['amount'],
+                'message': donation_data.get('message', ''),
+                'timestamp': donation_data['paid_at']
+            })
+            
+            # Emit leaderboard update
+            updated_leaderboard = get_leaderboard()
+            socketio.emit('leaderboard_updated', {
+                'leaderboard': updated_leaderboard
+            })
+            
+            # Emit recent donations update
+            successful_donations = [
+                d for d in donations if d['status'] == 'success'
+            ]
+            successful_donations.sort(
+                key=lambda x: x.get('paid_at', x['created_at']), 
+                reverse=True
+            )
+            
+            socketio.emit('recent_donations_updated', {
+                'donations': successful_donations[:10]
+            })
+            
+            logger.info(f"🎉 Emitted real-time updates for donation: {donation_data['donor_name']} - Rp {donation_data['amount']:,}")
+        
+        return jsonify({'status': 'ok'})
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing Midtrans notification: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'status': 'error'}), 500
+
+
+# Route untuk halaman finish donasi
+@app.route('/donation/finish')
+def donation_finish():
+    order_id = request.args.get('order_id')
+    
+    # Load donation data
+    donations = load_donations()
+    donation = None
+    
+    for d in donations:
+        if d['order_id'] == order_id:
+            donation = d
+            break
+    
+    return render_template('donation_finish.html', donation=donation)
+
+# API untuk mendapatkan leaderboard
+@app.route('/api/leaderboard')
+def api_leaderboard():
+    return jsonify({
+        'success': True,
+        'leaderboard': get_leaderboard()
+    })
+
+# API untuk mendapatkan donasi terbaru
+@app.route('/api/recent-donations')
+def api_recent_donations():
+    donations = load_donations()
+    
+    # Filter hanya donasi yang berhasil dan ambil 10 terbaru
+    successful_donations = [
+        d for d in donations 
+        if d['status'] == 'success'
+    ]
+    
+    # Sort by paid_at timestamp
+    successful_donations.sort(
+        key=lambda x: x.get('paid_at', x['created_at']), 
+        reverse=True
+    )
+    
+    return jsonify({
+        'success': True,
+        'donations': successful_donations[:10]  # 10 donasi terbaru
+    })
+    
+@app.route('/test-midtrans')
+def test_midtrans():
+    try:
+        # Generate timestamp tanpa module time
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        transaction_data = {
+            "transaction_details": {
+                "order_id": f"TEST-{timestamp}",
+                "gross_amount": 10000
+            },
+            "item_details": [{
+                "id": "test",
+                "price": 10000,
+                "quantity": 1,
+                "name": "Test Item"
+            }],
+            "customer_details": {
+                "first_name": "Test",
+                "last_name": "User",
+                "email": "test@chilinet.com"
+            }
+        }
+        
+        transaction = snap.create_transaction(transaction_data)
+        return jsonify({
+            'success': True,
+            'message': 'Midtrans connection OK! 🎉',
+            'token': transaction['token'],
+            'order_id': f"TEST-{timestamp}"
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Midtrans connection failed ❌'
+        })    
+
+# WebSocket events
+@socketio.on('connect')
+def handle_connect():
+    logger.info('Client connected')
+    emit('connected', {'data': 'Connected to donation system'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    logger.info('Client disconnected')
+
 if __name__ == '__main__':
-    app.run(debug=True)
+   socketio.run(app, debug=True, host='0.0.0.0', port=5000)

@@ -10,6 +10,9 @@ from datetime import datetime
 from flask_socketio import SocketIO, emit
 import midtransclient
 import logging
+from pymongo import MongoClient
+from bson import ObjectId
+import ssl
 
 # Load environment variables
 load_dotenv()
@@ -17,6 +20,8 @@ load_dotenv()
 # Midtrans Configuration
 MIDTRANS_SERVER_KEY = os.getenv('MIDTRANS_SERVER_KEY')
 MIDTRANS_CLIENT_KEY = os.getenv('MIDTRANS_CLIENT_KEY')
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DB = os.getenv('MONGODB_DB')
 MIDTRANS_IS_PRODUCTION = os.getenv('MIDTRANS_IS_PRODUCTION', 'False').lower() == 'true'
 
 # Setup logging
@@ -37,9 +42,6 @@ snap = midtransclient.Snap(
     server_key=MIDTRANS_SERVER_KEY,
      client_key=MIDTRANS_CLIENT_KEY 
 )
-
-# File untuk menyimpan data donasi (dalam produksi gunakan database)
-DONATIONS_FILE = 'donations.json'
 
 ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY')
 
@@ -154,6 +156,358 @@ DISEASE_INFO = {
         ]
     }
 }
+
+
+# Ganti bagian inisialisasi MongoDB Atlas dengan ini:
+
+# Inisialisasi MongoDB dengan Atlas-specific settings (FIXED)
+try:
+    if MONGODB_URI and 'mongodb+srv://' in MONGODB_URI:
+        # Atlas connection - simplified configuration
+        mongo_client = MongoClient(
+            MONGODB_URI,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=10000,
+            maxPoolSize=50,
+            retryWrites=True
+        )
+        logger.info("🌐 Connecting to MongoDB Atlas...")
+    elif MONGODB_URI:
+        # Local MongoDB
+        mongo_client = MongoClient(MONGODB_URI)
+        logger.info("🏠 Connecting to local MongoDB...")
+    else:
+        logger.error("❌ MONGODB_URI not configured")
+        raise Exception("MONGODB_URI environment variable not set")
+    
+    # Set database and collection
+    if not MONGODB_DB:
+        logger.error("❌ MONGODB_DB not configured")
+        raise Exception("MONGODB_DB environment variable not set")
+        
+    db = mongo_client[MONGODB_DB]
+    donations_collection = db.donations
+    
+    # Test connection dengan timeout
+    mongo_client.admin.command('ping')
+    logger.info(f"✅ MongoDB connected successfully to database: {MONGODB_DB}")
+    
+    # Log collection info
+    try:
+        count = donations_collection.count_documents({})
+        logger.info(f"📊 Found {count} existing donations in collection")
+    except Exception as e:
+        logger.info(f"📊 Collection is empty or being created: {e}")
+        
+except Exception as e:
+    logger.error(f"❌ MongoDB connection failed: {e}")
+    logger.error("💡 Make sure your Atlas cluster is running and connection string is correct")
+    logger.error(f"💡 MONGODB_URI: {MONGODB_URI[:50] + '...' if MONGODB_URI else 'Not set'}")
+    logger.error(f"💡 MONGODB_DB: {MONGODB_DB if MONGODB_DB else 'Not set'}")
+    mongo_client = None
+    db = None
+    donations_collection = None
+
+# Enhanced connection test function untuk Atlas
+def test_mongodb_atlas_connection():
+    """Test MongoDB Atlas connection with detailed info"""
+    try:
+        if mongo_client is None:
+            return {
+                'success': False,
+                'message': 'MongoDB client not initialized'
+            }
+        
+        # Test basic connection
+        mongo_client.admin.command('ping')
+        
+        # Get server info
+        server_info = mongo_client.server_info()
+        
+        # Get database list
+        database_list = mongo_client.list_database_names()
+        
+        # Get collection info
+        collection_names = db.list_collection_names()
+        
+        # Get donations count
+        donations_count = donations_collection.count_documents({})
+        
+        return {
+            'success': True,
+            'message': 'MongoDB Atlas connection successful! 🎉',
+            'server_version': server_info.get('version'),
+            'database_name': MONGODB_DB,
+            'available_databases': database_list,
+            'collections': collection_names,
+            'donations_count': donations_count
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Atlas connection failed: {str(e)}',
+            'error_type': type(e).__name__
+        }
+
+# Update test route untuk Atlas
+@app.route('/test-mongodb')
+def test_mongodb():
+    result = test_mongodb_atlas_connection()
+    
+    if result['success']:
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
+
+# Health check route untuk monitoring
+@app.route('/health/mongodb')
+def mongodb_health():
+    """Health check endpoint for MongoDB"""
+    try:
+        if mongo_client is None:
+            return jsonify({
+                'status': 'unhealthy',
+                'message': 'MongoDB not configured'
+            }), 503
+        
+        # Quick ping test
+        mongo_client.admin.command('ping')
+        
+        return jsonify({
+            'status': 'healthy',
+            'database': MONGODB_DB,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
+# MongoDB Helper Functions
+def save_donation_to_db(donation_data):
+    """Save donation to MongoDB"""
+    try:
+        if donations_collection is None:
+            logger.error("MongoDB collection not available")
+            return None
+            
+        # Add timestamps
+        donation_data['created_at'] = datetime.now()
+        donation_data['updated_at'] = datetime.now()
+        
+        result = donations_collection.insert_one(donation_data)
+        logger.info(f"✅ Donation saved to MongoDB: {result.inserted_id}")
+        return result.inserted_id
+    except Exception as e:
+        logger.error(f"❌ Error saving donation to MongoDB: {e}")
+        return None
+
+def update_donation_status(order_id, status, additional_data=None):
+    """Update donation status in MongoDB"""
+    try:
+        if donations_collection is None:
+            return False
+            
+        update_data = {
+            'status': status,
+            'updated_at': datetime.now()
+        }
+        
+        if additional_data:
+            update_data.update(additional_data)
+            
+        if status == 'success':
+            update_data['paid_at'] = datetime.now()
+            
+        result = donations_collection.update_one(
+            {'order_id': order_id},
+            {'$set': update_data}
+        )
+        
+        logger.info(f"✅ Donation status updated: {order_id} -> {status}")
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"❌ Error updating donation status: {e}")
+        return False
+
+def get_leaderboard_from_db():
+    """Get donation leaderboard from MongoDB"""
+    try:
+        if donations_collection is None:
+            return []
+            
+        pipeline = [
+            # Filter successful donations only
+            {'$match': {'status': 'success'}},
+            
+            # Group by donor name and calculate totals
+            {'$group': {
+                '_id': '$donor_name',
+                'total_amount': {'$sum': '$amount'},
+                'donation_count': {'$sum': 1},
+                'last_donation': {'$max': '$paid_at'},
+                'first_donation': {'$min': '$paid_at'}
+            }},
+            
+            # Sort by total amount (highest first)
+            {'$sort': {'total_amount': -1}},
+            
+            # Limit to top 50
+            {'$limit': 50},
+            
+            # Reshape output
+            {'$project': {
+                '_id': 0,
+                'name': '$_id',
+                'total_amount': 1,
+                'donation_count': 1,
+                'last_donation': 1,
+                'first_donation': 1
+            }}
+        ]
+        
+        leaderboard = list(donations_collection.aggregate(pipeline))
+        logger.info(f"✅ Leaderboard retrieved: {len(leaderboard)} donors")
+        return leaderboard
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting leaderboard: {e}")
+        return []
+
+def get_recent_donations_from_db(limit=10):
+    """Get recent successful donations from MongoDB"""
+    try:
+        if donations_collection is None:
+            return []
+            
+        recent_donations = list(donations_collection.find(
+            {'status': 'success'},
+            {
+                'donor_name': 1,
+                'amount': 1,
+                'message': 1,
+                'paid_at': 1,
+                'created_at': 1,
+                '_id': 0
+            }
+        ).sort('paid_at', -1).limit(limit))
+        
+        logger.info(f"✅ Recent donations retrieved: {len(recent_donations)} items")
+        return recent_donations
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting recent donations: {e}")
+        return []
+
+def get_donation_by_order_id(order_id):
+    """Get donation by order_id from MongoDB"""
+    try:
+        if donations_collection is None:
+            return None
+            
+        donation = donations_collection.find_one({'order_id': order_id})
+        return donation
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting donation by order_id: {e}")
+        return None
+
+def get_donation_stats():
+    """Get overall donation statistics"""
+    try:
+        if donations_collection is None:
+            return {}
+            
+        stats = donations_collection.aggregate([
+            {'$match': {'status': 'success'}},
+            {'$group': {
+                '_id': None,
+                'total_amount': {'$sum': '$amount'},
+                'total_donations': {'$sum': 1},
+                'unique_donors': {'$addToSet': '$donor_name'}
+            }},
+            {'$project': {
+                '_id': 0,
+                'total_amount': 1,
+                'total_donations': 1,
+                'unique_donors_count': {'$size': '$unique_donors'}
+            }}
+        ])
+        
+        result = list(stats)
+        return result[0] if result else {}
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting donation stats: {e}")
+        return {}
+
+# Fallback functions untuk kompatibilitas dengan JSON
+def load_donations():
+    """Fallback function - load from JSON if MongoDB not available"""
+    if donations_collection is not None:
+        # Use MongoDB
+        try:
+            donations = list(donations_collection.find({}, {'_id': 0}))
+            return donations
+        except Exception as e:
+            logger.error(f"Error loading from MongoDB: {e}")
+    
+    # Fallback to JSON
+    try:
+        if os.path.exists(DONATIONS_FILE):
+            with open(DONATIONS_FILE, 'r') as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logger.error(f"Error loading donations from JSON: {e}")
+        return []
+
+def save_donations(donations):
+    """Fallback function - save to JSON if MongoDB not available"""
+    if donations_collection is not None:
+        # MongoDB is handling saves individually
+        return
+    
+    # Fallback to JSON
+    try:
+        with open(DONATIONS_FILE, 'w') as f:
+            json.dump(donations, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving donations to JSON: {e}")
+
+def get_leaderboard():
+    """Updated function to use MongoDB first, fallback to old method"""
+    if donations_collection is not None:
+        return get_leaderboard_from_db()
+    
+    # Fallback to old JSON method
+    donations = load_donations()
+    leaderboard = {}
+    
+    for donation in donations:
+        if donation['status'] == 'success':
+            name = donation['donor_name']
+            amount = donation['amount']
+            
+            if name in leaderboard:
+                leaderboard[name]['total_amount'] += amount
+                leaderboard[name]['donation_count'] += 1
+            else:
+                leaderboard[name] = {
+                    'name': name,
+                    'total_amount': amount,
+                    'donation_count': 1,
+                    'last_donation': donation['created_at']
+                }
+    
+    leaderboard_list = list(leaderboard.values())
+    leaderboard_list.sort(key=lambda x: x['total_amount'], reverse=True)
+    
+    return leaderboard_list
 
 def get_disease_key(class_name):
     """Convert class name to disease key dengan lebih banyak variasi"""
@@ -479,55 +833,7 @@ def capture_webcam():
         return jsonify({'error': str(e)})
 
 
-def load_donations():
-    """Load donations from JSON file"""
-    try:
-        if os.path.exists(DONATIONS_FILE):
-            with open(DONATIONS_FILE, 'r') as f:
-                return json.load(f)
-        return []
-    except Exception as e:
-        logger.error(f"Error loading donations: {e}")
-        return []
-
-def save_donations(donations):
-    """Save donations to JSON file"""
-    try:
-        with open(DONATIONS_FILE, 'w') as f:
-            json.dump(donations, f, indent=2)
-    except Exception as e:
-        logger.error(f"Error saving donations: {e}")
-
-def get_leaderboard():
-    """Get donation leaderboard"""
-    donations = load_donations()
-    # Group by donor name and sum amounts
-    leaderboard = {}
-    
-    for donation in donations:
-        if donation['status'] == 'success':
-            name = donation['donor_name']
-            amount = donation['amount']
-            
-            if name in leaderboard:
-                leaderboard[name]['total_amount'] += amount
-                leaderboard[name]['donation_count'] += 1
-            else:
-                leaderboard[name] = {
-                    'name': name,
-                    'total_amount': amount,
-                    'donation_count': 1,
-                    'last_donation': donation['created_at']
-                }
-    
-    # Convert to list and sort by total amount
-    leaderboard_list = list(leaderboard.values())
-    leaderboard_list.sort(key=lambda x: x['total_amount'], reverse=True)
-    
-    return leaderboard_list
-
-# Route untuk donasi
-# Route untuk donasi - FINAL VERSION
+# Update route untuk donasi dengan MongoDB
 @app.route('/donate', methods=['POST'])
 def create_donation():
     try:
@@ -605,8 +911,7 @@ def create_donation():
                 'message': f'Midtrans error: {str(midtrans_error)}'
             }), 500
         
-        # Save donation record
-        donations = load_donations()
+        # Save donation record to MongoDB
         donation_record = {
             "order_id": order_id,
             "donor_name": donor_name,
@@ -614,13 +919,28 @@ def create_donation():
             "message": message,
             "status": "pending",
             "snap_token": transaction['token'],
-            "created_at": datetime.now().isoformat()
+            "midtrans_transaction_id": transaction.get('transaction_id'),
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
         }
         
-        donations.append(donation_record)
-        save_donations(donations)
-        
-        logger.info(f"✅ Donation saved: {order_id} - {donor_name} - Rp {amount:,}")
+        if donations_collection is not None:
+            # Save to MongoDB
+            donation_id = save_donation_to_db(donation_record)
+            if donation_id:
+                logger.info(f"✅ Donation saved to MongoDB: {order_id} - {donor_name} - Rp {amount:,}")
+            else:
+                logger.warning("⚠️ Failed to save to MongoDB, falling back to JSON")
+                # Fallback to JSON
+                donations = load_donations()
+                donations.append(donation_record)
+                save_donations(donations)
+        else:
+            # Fallback to JSON if MongoDB not available
+            donations = load_donations()
+            donations.append(donation_record)
+            save_donations(donations)
+            logger.info(f"✅ Donation saved to JSON: {order_id} - {donor_name} - Rp {amount:,}")
         
         return jsonify({
             'success': True,
@@ -638,6 +958,7 @@ def create_donation():
         }), 500
 
 # Webhook untuk menerima notifikasi dari Midtrans
+# Update webhook untuk menerima notifikasi dari Midtrans
 @app.route('/midtrans/notification', methods=['POST'])
 def midtrans_notification():
     try:
@@ -648,69 +969,124 @@ def midtrans_notification():
         
         logger.info(f"🔔 Midtrans notification: {order_id} - {transaction_status}")
         
-        # Load donations
-        donations = load_donations()
-        
-        # Find donation record
-        donation_index = None
-        for i, donation in enumerate(donations):
-            if donation['order_id'] == order_id:
-                donation_index = i
-                break
-        
-        if donation_index is None:
-            logger.warning(f"❌ Donation not found: {order_id}")
-            return jsonify({'status': 'not_found'}), 404
-        
-        # Update donation status
-        old_status = donations[donation_index]['status']
-        
-        if transaction_status == 'capture' or transaction_status == 'settlement':
-            if fraud_status == 'accept':
-                donations[donation_index]['status'] = 'success'
-                donations[donation_index]['paid_at'] = datetime.now().isoformat()
-                logger.info(f"✅ Donation marked as successful: {order_id}")
-        elif transaction_status == 'pending':
-            donations[donation_index]['status'] = 'pending'
-            logger.info(f"⏳ Donation pending: {order_id}")
-        elif transaction_status in ['deny', 'cancel', 'expire']:
-            donations[donation_index]['status'] = 'failed'
-            logger.info(f"❌ Donation failed: {order_id}")
-        
-        save_donations(donations)
-        
-        # Emit real-time notifications jika status berubah ke success
-        if old_status != 'success' and donations[donation_index]['status'] == 'success':
-            donation_data = donations[donation_index]
+        if donations_collection is not None:
+            # MongoDB approach
+            donation = get_donation_by_order_id(order_id)
             
-            # Emit donation notification
-            socketio.emit('new_donation', {
-                'donor_name': donation_data['donor_name'],
-                'amount': donation_data['amount'],
-                'message': donation_data.get('message', ''),
-                'timestamp': donation_data['paid_at']
-            })
+            if not donation:
+                logger.warning(f"❌ Donation not found in MongoDB: {order_id}")
+                return jsonify({'status': 'not_found'}), 404
             
-            # Emit leaderboard update
-            updated_leaderboard = get_leaderboard()
-            socketio.emit('leaderboard_updated', {
-                'leaderboard': updated_leaderboard
-            })
+            old_status = donation['status']
+            new_status = old_status
+            additional_data = {}
             
-            # Emit recent donations update
-            successful_donations = [
-                d for d in donations if d['status'] == 'success'
-            ]
-            successful_donations.sort(
-                key=lambda x: x.get('paid_at', x['created_at']), 
-                reverse=True
-            )
+            # Determine new status
+            if transaction_status == 'capture' or transaction_status == 'settlement':
+                if fraud_status == 'accept':
+                    new_status = 'success'
+                    additional_data['paid_at'] = datetime.now()
+                    logger.info(f"✅ Donation marked as successful: {order_id}")
+            elif transaction_status == 'pending':
+                new_status = 'pending'
+                logger.info(f"⏳ Donation pending: {order_id}")
+            elif transaction_status in ['deny', 'cancel', 'expire']:
+                new_status = 'failed'
+                logger.info(f"❌ Donation failed: {order_id}")
             
-            socketio.emit('recent_donations_updated', {
-                'donations': successful_donations[:10]
-            })
+            # Update status in MongoDB
+            if new_status != old_status:
+                update_donation_status(order_id, new_status, additional_data)
+                
+                # Emit real-time notifications jika status berubah ke success
+                if new_status == 'success':
+                    donation_data = {
+                        'donor_name': donation['donor_name'],
+                        'amount': donation['amount'],
+                        'message': donation.get('message', ''),
+                        'timestamp': additional_data['paid_at'].isoformat()
+                    }
+                    
+                    # Emit donation notification
+                    socketio.emit('new_donation', donation_data)
+                    
+                    # Emit leaderboard update
+                    updated_leaderboard = get_leaderboard_from_db()
+                    socketio.emit('leaderboard_updated', {
+                        'leaderboard': updated_leaderboard
+                    })
+                    
+                    # Emit recent donations update
+                    recent_donations = get_recent_donations_from_db(10)
+                    socketio.emit('recent_donations_updated', {
+                        'donations': recent_donations
+                    })
+                    
+                    logger.info(f"🎉 Emitted real-time updates for donation: {donation_data['donor_name']} - Rp {donation_data['amount']:,}")
+        else:
+            # Fallback ke JSON approach
+            donations = load_donations()
             
-            logger.info(f"🎉 Emitted real-time updates for donation: {donation_data['donor_name']} - Rp {donation_data['amount']:,}")
+            # Find donation record
+            donation_index = None
+            for i, donation in enumerate(donations):
+                if donation['order_id'] == order_id:
+                    donation_index = i
+                    break
+            
+            if donation_index is None:
+                logger.warning(f"❌ Donation not found: {order_id}")
+                return jsonify({'status': 'not_found'}), 404
+            
+            # Update donation status
+            old_status = donations[donation_index]['status']
+            
+            if transaction_status == 'capture' or transaction_status == 'settlement':
+                if fraud_status == 'accept':
+                    donations[donation_index]['status'] = 'success'
+                    donations[donation_index]['paid_at'] = datetime.now().isoformat()
+                    logger.info(f"✅ Donation marked as successful: {order_id}")
+            elif transaction_status == 'pending':
+                donations[donation_index]['status'] = 'pending'
+                logger.info(f"⏳ Donation pending: {order_id}")
+            elif transaction_status in ['deny', 'cancel', 'expire']:
+                donations[donation_index]['status'] = 'failed'
+                logger.info(f"❌ Donation failed: {order_id}")
+            
+            save_donations(donations)
+            
+            # Emit real-time notifications jika status berubah ke success
+            if old_status != 'success' and donations[donation_index]['status'] == 'success':
+                donation_data = donations[donation_index]
+                
+                # Emit donation notification
+                socketio.emit('new_donation', {
+                    'donor_name': donation_data['donor_name'],
+                    'amount': donation_data['amount'],
+                    'message': donation_data.get('message', ''),
+                    'timestamp': donation_data['paid_at']
+                })
+                
+                # Emit leaderboard update
+                updated_leaderboard = get_leaderboard()
+                socketio.emit('leaderboard_updated', {
+                    'leaderboard': updated_leaderboard
+                })
+                
+                # Emit recent donations update
+                successful_donations = [
+                    d for d in donations if d['status'] == 'success'
+                ]
+                successful_donations.sort(
+                    key=lambda x: x.get('paid_at', x['created_at']), 
+                    reverse=True
+                )
+                
+                socketio.emit('recent_donations_updated', {
+                    'donations': successful_donations[:10]
+                })
+                
+                logger.info(f"🎉 Emitted real-time updates for donation: {donation_data['donor_name']} - Rp {donation_data['amount']:,}")
         
         return jsonify({'status': 'ok'})
         
@@ -721,51 +1097,108 @@ def midtrans_notification():
         return jsonify({'status': 'error'}), 500
 
 
-# Route untuk halaman finish donasi
+# Update API route untuk leaderboard
+@app.route('/api/leaderboard')
+def api_leaderboard():
+    try:
+        leaderboard = get_leaderboard()  # Akan menggunakan MongoDB jika tersedia
+        return jsonify({
+            'success': True,
+            'leaderboard': leaderboard
+        })
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to load leaderboard'
+        }), 500
+
+# Update API route untuk donasi terbaru
+@app.route('/api/recent-donations')
+def api_recent_donations():
+    try:
+        if donations_collection is not None:
+            # Use MongoDB
+            recent_donations = get_recent_donations_from_db(10)
+        else:
+            # Fallback to JSON
+            donations = load_donations()
+            
+            # Filter hanya donasi yang berhasil dan ambil 10 terbaru
+            successful_donations = [
+                d for d in donations 
+                if d['status'] == 'success'
+            ]
+            
+            # Sort by paid_at timestamp
+            successful_donations.sort(
+                key=lambda x: x.get('paid_at', x['created_at']), 
+                reverse=True
+            )
+            
+            recent_donations = successful_donations[:10]
+        
+        return jsonify({
+            'success': True,
+            'donations': recent_donations
+        })
+    except Exception as e:
+        logger.error(f"Error getting recent donations: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to load recent donations'
+        }), 500
+
+# Update route untuk halaman finish donasi
 @app.route('/donation/finish')
 def donation_finish():
     order_id = request.args.get('order_id')
     
-    # Load donation data
-    donations = load_donations()
-    donation = None
-    
-    for d in donations:
-        if d['order_id'] == order_id:
-            donation = d
-            break
+    if donations_collection is not None:
+        # Get from MongoDB
+        donation = get_donation_by_order_id(order_id)
+        # Convert ObjectId to string for JSON serialization
+        if donation and '_id' in donation:
+            donation['_id'] = str(donation['_id'])
+    else:
+        # Fallback to JSON
+        donations = load_donations()
+        donation = None
+        
+        for d in donations:
+            if d['order_id'] == order_id:
+                donation = d
+                break
     
     return render_template('donation_finish.html', donation=donation)
 
-# API untuk mendapatkan leaderboard
-@app.route('/api/leaderboard')
-def api_leaderboard():
-    return jsonify({
-        'success': True,
-        'leaderboard': get_leaderboard()
-    })
-
-# API untuk mendapatkan donasi terbaru
-@app.route('/api/recent-donations')
-def api_recent_donations():
-    donations = load_donations()
-    
-    # Filter hanya donasi yang berhasil dan ambil 10 terbaru
-    successful_donations = [
-        d for d in donations 
-        if d['status'] == 'success'
-    ]
-    
-    # Sort by paid_at timestamp
-    successful_donations.sort(
-        key=lambda x: x.get('paid_at', x['created_at']), 
-        reverse=True
-    )
-    
-    return jsonify({
-        'success': True,
-        'donations': successful_donations[:10]  # 10 donasi terbaru
-    })
+# Tambah route untuk statistik donasi (bonus)
+@app.route('/api/donation-stats')
+def api_donation_stats():
+    try:
+        if donations_collection is not None:
+            stats = get_donation_stats()
+        else:
+            # Fallback calculation for JSON
+            donations = load_donations()
+            successful_donations = [d for d in donations if d['status'] == 'success']
+            
+            stats = {
+                'total_amount': sum(d['amount'] for d in successful_donations),
+                'total_donations': len(successful_donations),
+                'unique_donors_count': len(set(d['donor_name'] for d in successful_donations))
+            }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        logger.error(f"Error getting donation stats: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to load donation stats'
+        }), 500
     
 @app.route('/test-midtrans')
 def test_midtrans():

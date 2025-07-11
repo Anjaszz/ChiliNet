@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load data
     loadRecentDonations();
-    
-    console.log('✅ ChiliNet donation system initialized');
 });
 
 // Initialize DOM elements
@@ -61,18 +59,21 @@ function initializeElements() {
         document.body.appendChild(toastContainer);
     }
     
-    console.log('✅ Elements initialized');
 }
 
 // Socket Events
 function initializeSocketEvents() {
+
+    
     socket.on('connect', function() {
         console.log('✅ Connected to donation system');
-        showInfoToast('Terhubung ke sistem donasi real-time! 🔗');
     });
     
+    // TAMBAH DEBUGGING untuk new_donation
     socket.on('new_donation', function(data) {
-        console.log('🎉 New donation received:', data);
+
+        
+        // Panggil semua fungsi notifikasi
         showDonationToast(data);
         playNotificationSound();
         createConfetti();
@@ -87,7 +88,7 @@ function initializeSocketEvents() {
     });
     
     socket.on('leaderboard_updated', function(data) {
-        console.log('📊 Leaderboard updated:', data);
+
         
         // Update leaderboard if modal is open
         if (leaderboardModal && !leaderboardModal.classList.contains('hidden')) {
@@ -98,13 +99,16 @@ function initializeSocketEvents() {
     });
     
     socket.on('recent_donations_updated', function(data) {
-        console.log('💚 Recent donations updated:', data);
         displayRecentDonations(data.donations);
     });
     
     socket.on('disconnect', function() {
         console.log('❌ Disconnected from donation system');
-        showErrorToast('Koneksi terputus dari sistem donasi');
+    });
+    
+    // TAMBAH: Listen untuk semua socket events (debugging)
+    socket.onAny((eventName, ...args) => {
+        // console.log(`🔔 Socket event received: ${eventName}`, args);
     });
 }
 
@@ -226,7 +230,6 @@ async function processDonation() {
             message: formData.get('message') || ''
         };
         
-        console.log('🔄 Sending donation data:', data);
         
         // Validate
         if (!data.donor_name || data.amount < 5000) {
@@ -242,7 +245,7 @@ async function processDonation() {
         });
         
         const result = await response.json();
-        console.log('📥 Donation response:', result);
+
         
         if (result.success) {
             // Close modal
@@ -258,38 +261,43 @@ async function processDonation() {
             
             // Open Midtrans payment
             snap.pay(result.snap_token, {
-                onSuccess: function(result) {
-                    console.log('✅ Payment success:', result);
-                    showSuccessToast('Pembayaran berhasil! Terima kasih atas donasi Anda! 🙏');
+                onSuccess: function(paymentResult) {
+                    // console.log('✅ Payment success:', paymentResult);
                     
                     // Reset form
                     if (donationForm) {
                         donationForm.reset();
                     }
                     
-                    // Auto-refresh leaderboard after 2 seconds
-                    setTimeout(() => {
-                        loadRecentDonations();
-                        if (leaderboardModal && !leaderboardModal.classList.contains('hidden')) {
-                            loadLeaderboard();
-                        }
-                    }, 2000);
+                    // REDIRECT LANGSUNG - TANPA DELAY
+                    window.location.href = `/donation/finish?order_id=${result.order_id}`;
                     
-                    // Redirect to finish page after showing success
-                    setTimeout(() => {
-                        window.location.href = `/donation/finish?order_id=${result.order_id}`;
-                    }, 3000);
+                    // Background notification (opsional - tidak menghalangi redirect)
+                    const donationData = {
+                        donor_name: data.donor_name,
+                        amount: data.amount,
+                        message: data.message,
+                        order_id: result.order_id,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Send notification tanpa menunggu response
+                    fetch('/manual-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(donationData)
+                    }).catch(() => {}); // Silent fail - tidak penting untuk UX
                 },
                 onPending: function(result) {
-                    console.log('⏳ Payment pending:', result);
+                    // console.log('⏳ Payment pending:', result);
                     showInfoToast('Pembayaran sedang diproses... ⏳');
                 },
                 onError: function(result) {
-                    console.log('❌ Payment error:', result);
+                    // console.log('❌ Payment error:', result);
                     showErrorToast('Pembayaran gagal. Silakan coba lagi.');
                 },
                 onClose: function() {
-                    console.log('🔒 Payment popup closed');
+                    // console.log('🔒 Payment popup closed');
                     showInfoToast('Jendela pembayaran ditutup');
                 }
             });
@@ -422,47 +430,139 @@ function displayLeaderboard(leaderboard) {
     }).join('');
 }
 
-// Toast notifications
 function showDonationToast(donation) {
+    // console.log('🍞 showDonationToast called with:', donation);
+    
+    // Validasi data
+    if (!donation || !donation.donor_name || !donation.amount) {
+        console.error('❌ Invalid donation data for toast:', donation);
+        showErrorToast('Data donasi tidak valid');
+        return;
+    }
+    
+    // Pastikan toastContainer ada dan visible
+    ensureToastContainer();
+    
     const toast = document.createElement('div');
-    toast.className = 'toast-enter bg-green-500 border-4 border-black neobrutalism-shadow-sm p-4 max-w-sm transform translate-x-full transition-transform duration-500';
+    
+    // PERBAIKAN 1: Hapus translate-x-full dari class awal
+    toast.className = 'toast-item bg-green-500 border-4 border-black p-4 max-w-sm shadow-2xl';
+    
+    // PERBAIKAN 2: Set style langsung untuk memastikan visibility
+    toast.style.cssText = `
+        position: relative;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.5s ease-out;
+        z-index: 9999;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        box-shadow: 8px 8px 0px 0px #000000;
+    `;
+    
+    // Format amount dengan fallback
+    const formattedAmount = donation.amount ? donation.amount.toLocaleString('id-ID') : '0';
     
     toast.innerHTML = `
         <div class="flex items-center gap-3">
             <span class="text-2xl animate-bounce">💝</span>
             <div class="flex-1">
-                <h4 class="font-bold text-white">Donasi Baru!</h4>
+                <h4 class="font-bold text-white text-base">🎉 DONASI BARU!</h4>
                 <p class="text-sm text-white">
                     <strong>${donation.donor_name}</strong> berdonasi 
-                    <strong>Rp ${donation.amount.toLocaleString('id-ID')}</strong>
+                    <strong>Rp ${formattedAmount}</strong>
                 </p>
                 ${donation.message ? `<p class="text-xs text-green-100 mt-1">"${donation.message}"</p>` : ''}
             </div>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-red-200">
+            <button class="toast-close text-white hover:text-red-200 font-bold text-lg leading-none">
                 ✕
             </button>
         </div>
     `;
     
+    // Event listener untuk close button
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => {
+        removeToast(toast);
+    });
+    
+  
     toastContainer.appendChild(toast);
     
-    // Animate in
-    setTimeout(() => {
-        toast.classList.remove('translate-x-full');
-    }, 100);
+    // PERBAIKAN 3: Force reflow dan animate in dengan delay yang lebih kecil
+    toast.offsetHeight; // Force reflow
     
-    // Auto remove after 10 seconds
+    setTimeout(() => {
+        toast.style.transform = 'translateX(0px)';
+        toast.style.opacity = '1';
+    }, 50); // Kurangi delay dari 100ms ke 50ms
+    
+    // Auto remove after 8 seconds
+    setTimeout(() => {
+        removeToast(toast);
+    }, 8000);
+    
+    
+    // PERBAIKAN 4: Debugging - log final position
+    // setTimeout(() => {
+    //     const rect = toast.getBoundingClientRect();
+    //     console.log('📍 Toast position:', {
+    //         top: rect.top,
+    //         right: rect.right,
+    //         bottom: rect.bottom,
+    //         left: rect.left,
+    //         width: rect.width,
+    //         height: rect.height,
+    //         visible: rect.width > 0 && rect.height > 0
+    //     });
+    // }, 100);
+}
+
+function ensureToastContainer() {
+    toastContainer = document.getElementById('toast-container');
+    
+    if (!toastContainer) {
+        // console.log('🔧 Creating new toast container...');
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // PERBAIKAN 6: Set style langsung untuk memastikan positioning
+    toastContainer.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 99999;
+        pointer-events: none;
+        max-width: 400px;
+        width: auto;
+    `;
+    
+    // Enable pointer events for children
+    toastContainer.style.pointerEvents = 'none';
+    
+    // Make sure it's visible
+    toastContainer.style.display = 'block';
+    toastContainer.style.visibility = 'visible';
+    
+}
+
+// PERBAIKAN 7: Fungsi terpisah untuk remove toast
+function removeToast(toast) {
+    if (!toast || !toast.parentElement) return;
+    
+    toast.style.transform = 'translateX(400px)';
+    toast.style.opacity = '0';
+    
     setTimeout(() => {
         if (toast.parentElement) {
-            toast.classList.add('translate-x-full');
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 500);
+            toast.remove();
         }
-    }, 10000);
+    }, 500);
 }
+
+
 
 function showSuccessToast(message) {
     showToast(message, 'success', '✅');
@@ -569,7 +669,7 @@ function playNotificationSound() {
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
     } catch (error) {
-        console.log('Audio notification not supported');
+        // console.log('Audio notification not supported');
     }
 }
 
